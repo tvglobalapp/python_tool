@@ -1,25 +1,14 @@
-from jira.client import *
-
-jira_server_url = "https://ybincho.atlassian.net/"
-# HLM Dev. Tracker serevr url   : "hlm.lge.com/issue"
-# HLM Q. Tracker server url     : "hlm.lge.com/qi"
-
-project_id      = "PR1-1"       # Global SW 개발실 Project id : GSWDIM
-account_id      = "ybin"        # jira login id
-account_passwd  = "passwd"   # jira login password
-
-# create instance as jira.client.JIRA class with given url, account
-tracker = JIRA(server=jira_server_url, basic_auth=(account_id, account_passwd))
+from  jira_connect import *
 
 ## 1. Get Issue with various method
 ## 1-1. with issue-key (ex. 'GSWDIM-XXXX')
-issue = tracker.issue("PR1-1")
+issue = tracker.issue("SSP-26")
 print(str(issue))
 
 ## 1-2. with jql (jql is jira-sql)
 ## ex1. 'project=GSWDIM and assignee=ybin.cho'
 ## ex2. 'filter in ('L17_global_UI_part')'
-jql = "project=PR1 AND assignee=ybin"
+jql = 'project=SSP AND reporter=ybin.cho AND summary~"Test Issue"'
 issues = tracker.search_issues(jql)
 len(issues) # 검색 결과 이슈 개수, 첫번째 이슈 : issues[0], 두번째:issue[1], ...
 issue = issues[0]   # 첫번째 이슈 가져오기
@@ -38,14 +27,14 @@ assignee['emailAddress']        ## e-mail address [str] ex. 'ybin.cho@lge.com'
 
 # label
 labels = fields['labels']       ## get issue labels [list]
-labels[0]                       ## first label [str]
+#labels[0]                      ## first label [str]
 
 # status
 status = fields['status']       ## get status [dict]
 status['name']                  ## status name [str] ex. Open, In-progress, ..
 tracker.transitions(issue)      ## get list of status[dict]
-tracker.transition_issue(issue, 'Resolved') ## status의 string
-tracker.transition_issue(issue, 10)         ## status의 id값
+tracker.transition_issue(issue, 'Resolve issue')  ## status의 string
+# tracker.transition_issue(issue, 5)                ## status의 id값
 
 ## 2-2. fields 멤버를 통해 가져오기
 fs = issue.fields                   ## type : jira.resoucrs.PropertyHolder
