@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1305</width>
-    <height>800</height>
+    <height>811</height>
    </rect>
   </property>
   <property name="font">
@@ -17,16 +17,16 @@
    </font>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>E-Streamer 검증 관리</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <widget class="QPushButton" name="btnLogin">
     <property name="geometry">
      <rect>
       <x>1100</x>
-      <y>49</y>
+      <y>14</y>
       <width>181</width>
-      <height>31</height>
+      <height>35</height>
      </rect>
     </property>
     <property name="text">
@@ -36,44 +36,17 @@
    <widget class="QWidget" name="verticalLayoutWidget">
     <property name="geometry">
      <rect>
-      <x>0</x>
-      <y>110</y>
-      <width>1281</width>
-      <height>281</height>
+      <x>20</x>
+      <y>448</y>
+      <width>1261</width>
+      <height>230</height>
      </rect>
     </property>
-    <layout class="QVBoxLayout" name="verticalLayout">
+    <layout class="QGridLayout" name="gridLayout">
      <property name="leftMargin">
-      <number>20</number>
+      <number>0</number>
      </property>
-     <item>
-      <widget class="QCheckBox" name="chkLowend">
-       <property name="minimumSize">
-        <size>
-         <width>0</width>
-         <height>30</height>
-        </size>
-       </property>
-       <property name="font">
-        <font>
-         <pointsize>14</pointsize>
-        </font>
-       </property>
-       <property name="text">
-        <string>Filter Lowend &amp; DV_A grade</string>
-       </property>
-       <property name="iconSize">
-        <size>
-         <width>30</width>
-         <height>30</height>
-        </size>
-       </property>
-       <property name="checked">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-     <item>
+     <item row="1" column="0">
       <widget class="QTableWidget" name="tblMaster">
        <property name="autoScroll">
         <bool>true</bool>
@@ -102,58 +75,53 @@
        <column/>
       </widget>
      </item>
+     <item row="0" column="0">
+      <widget class="QCheckBox" name="chkLowend">
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>30</height>
+        </size>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>14</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string>Filter Lowend &amp; DV_A grade</string>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>30</width>
+         <height>30</height>
+        </size>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
     </layout>
    </widget>
    <widget class="QPushButton" name="btnOpenMaster">
     <property name="geometry">
      <rect>
-      <x>1101</x>
-      <y>100</y>
+      <x>1100</x>
+      <y>428</y>
       <width>181</width>
-      <height>31</height>
+      <height>41</height>
      </rect>
     </property>
     <property name="text">
      <string>Open 개발 Master</string>
     </property>
    </widget>
-   <widget class="QLabel" name="label_3">
-    <property name="geometry">
-     <rect>
-      <x>20</x>
-      <y>20</y>
-      <width>331</width>
-      <height>41</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <family>HY견고딕</family>
-      <pointsize>16</pointsize>
-     </font>
-    </property>
-    <property name="text">
-     <string>E-Streamer 검증</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="btnCreateIssue">
-    <property name="geometry">
-     <rect>
-      <x>1100</x>
-      <y>407</y>
-      <width>181</width>
-      <height>31</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>이슈 생성하기</string>
-    </property>
-   </widget>
    <widget class="QLabel" name="lblId">
     <property name="geometry">
      <rect>
-      <x>590</x>
-      <y>44</y>
+      <x>650</x>
+      <y>14</y>
       <width>78</width>
       <height>38</height>
      </rect>
@@ -176,9 +144,9 @@
    <widget class="QLineEdit" name="txtId">
     <property name="geometry">
      <rect>
-      <x>674</x>
-      <y>44</y>
-      <width>151</width>
+      <x>740</x>
+      <y>14</y>
+      <width>121</width>
       <height>38</height>
      </rect>
     </property>
@@ -197,8 +165,8 @@
    <widget class="QLabel" name="lblPwd">
     <property name="geometry">
      <rect>
-      <x>840</x>
-      <y>44</y>
+      <x>870</x>
+      <y>14</y>
       <width>78</width>
       <height>38</height>
      </rect>
@@ -221,9 +189,9 @@
    <widget class="QLineEdit" name="txtPwd">
     <property name="geometry">
      <rect>
-      <x>924</x>
-      <y>44</y>
-      <width>151</width>
+      <x>960</x>
+      <y>14</y>
+      <width>121</width>
       <height>38</height>
      </rect>
     </property>
@@ -245,18 +213,18 @@
    <widget class="QLabel" name="lblStatus">
     <property name="geometry">
      <rect>
-      <x>870</x>
-      <y>417</y>
-      <width>191</width>
-      <height>20</height>
+      <x>708</x>
+      <y>388</y>
+      <width>571</width>
+      <height>31</height>
      </rect>
     </property>
     <property name="font">
      <font>
       <family>Arial</family>
-      <pointsize>10</pointsize>
-      <weight>50</weight>
-      <bold>false</bold>
+      <pointsize>13</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
      </font>
     </property>
     <property name="alignment">
@@ -266,9 +234,9 @@
    <widget class="QLabel" name="lblUserName">
     <property name="geometry">
      <rect>
-      <x>725</x>
-      <y>100</y>
-      <width>350</width>
+      <x>710</x>
+      <y>20</y>
+      <width>371</width>
       <height>31</height>
      </rect>
     </property>
@@ -288,6 +256,181 @@
     </property>
     <property name="alignment">
      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="btnInqIssue">
+    <property name="geometry">
+     <rect>
+      <x>1100</x>
+      <y>60</y>
+      <width>181</width>
+      <height>35</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>JIRA 조회</string>
+    </property>
+   </widget>
+   <widget class="QTableWidget" name="tblJira">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>105</y>
+      <width>1260</width>
+      <height>281</height>
+     </rect>
+    </property>
+    <property name="autoScroll">
+     <bool>true</bool>
+    </property>
+    <property name="selectionMode">
+     <enum>QAbstractItemView::SingleSelection</enum>
+    </property>
+    <property name="selectionBehavior">
+     <enum>QAbstractItemView::SelectRows</enum>
+    </property>
+    <property name="columnCount">
+     <number>10</number>
+    </property>
+    <attribute name="horizontalHeaderCascadingSectionResizes">
+     <bool>true</bool>
+    </attribute>
+    <column/>
+    <column/>
+    <column/>
+    <column/>
+    <column/>
+    <column/>
+    <column/>
+    <column/>
+    <column/>
+    <column/>
+   </widget>
+   <widget class="QLabel" name="lblVer">
+    <property name="geometry">
+     <rect>
+      <x>1009</x>
+      <y>441</y>
+      <width>91</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>14</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="btnChkDiff">
+    <property name="geometry">
+     <rect>
+      <x>900</x>
+      <y>688</y>
+      <width>181</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>변경점 Check</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="btnUpdate">
+    <property name="geometry">
+     <rect>
+      <x>1100</x>
+      <y>688</y>
+      <width>181</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>변경점 일괄 반영
+(이슈 생성 / 업데이트)</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="lblVer_2">
+    <property name="geometry">
+     <rect>
+      <x>769</x>
+      <y>441</y>
+      <width>241</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>14</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>개발 Master Version : </string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="lblImageInfo">
+    <property name="geometry">
+     <rect>
+      <x>638</x>
+      <y>90</y>
+      <width>431</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>13</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="chkSession">
+    <property name="geometry">
+     <rect>
+      <x>330</x>
+      <y>25</y>
+      <width>351</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="layoutDirection">
+     <enum>Qt::RightToLeft</enum>
+    </property>
+    <property name="text">
+     <string>Remember my login on this computer</string>
+    </property>
+    <property name="iconSize">
+     <size>
+      <width>20</width>
+      <height>20</height>
+     </size>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="btnLogout">
+    <property name="geometry">
+     <rect>
+      <x>1100</x>
+      <y>14</y>
+      <width>181</width>
+      <height>35</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>JIRA Log Out</string>
     </property>
    </widget>
   </widget>

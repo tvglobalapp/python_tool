@@ -5,6 +5,10 @@ import xlrd
 class Dev_Meta:
     ''' 개발 Master 장표의 Meta 정보들에 대한 constant 관리 class
     '''
+    ## 개발 Master의 개발/모델 년도
+    devYear             = 2016
+    modelYear           = devYear+1
+
     ##개발 Master의 row index
     idxHeader             = 2
     idxStartModelInfo     = 3
@@ -29,6 +33,10 @@ class Dev_Master:
         # 개발  Master Version과 File명
         self.version = ''
         self.xls_file_name = xls
+
+        # key : final model_name, value : list of previous model names
+        # ex. A→B→C 인 모델의 경우 {'C': ['A', 'B']}
+        self.prev_model_names = {}
 
     ## 지역 별 기획 담당자
     def getPlanOwnerName(cls, region):
@@ -58,16 +66,56 @@ class Dev_Master:
         import datetime
         import xlrd.xldate as xdate
         date = xdate.xldate_as_datetime(fDate, 0) ## datemode - 0 : 1900-base, 1 : 1904-base
-        return str(date.month)+"/"+str(date.day)
+        return str(date.year)+"/"+str(date.month)+"/"+str(date.day)
 
-    def getFilteredText(cls, txt):
+    def getFilteredDateText(cls, txt):
         ## Date Format -> String "MM/DD"
         if type(txt) in [float, int]:
             return cls.convertFloatToDateString(txt)
 
+        filteredTxt = cls.getFilteredText(txt)
+        list_date = filteredTxt.split("/")
+        if len(list_date)==2:
+            mm = list_date[0]
+            if int(mm)>10:
+                yy=str(Dev_Meta.devYear)
+            else:
+                yy=str(Dev_Meta.modelYear)
+        else:
+            #print("list_date : "+filteredTxt)
+            return filteredTxt
+        #print("return date : "+yy+"/"+filteredTxt)
+        return yy+"/"+filteredTxt
+
+    def getFilteredText(cls, txt):
         list1 = txt.split("→")
         list2 = list1[len(list1)-1]
         return list2.split("(")[0].split("\n")[0]
+
+    # Model Name은 변경사항에 대해 변경 전 모델명들을 return한다
+    # ex. A->B->C->D로 3번 변경되었으면 ['A', 'B', 'C'] 을 return
+    def getPrevModelNames(cls, txt):
+        model_list = txt.split("→")
+        prev_model_names = []
+        if len(model_list)>1:
+            for prev_model in range(0, len(model_list)-1):
+                prev_model_name = model_list[prev_model]
+                prev_model_name = prev_model_name.split("(")[0].split("\n")[0]
+                prev_model_names.append(prev_model_name)
+
+        # for debug print : 나중에 지우자
+        if len(prev_model_names)>0:
+            last_model_name = cls.getFilteredText(txt)
+            print("prev model names of "
+                  +last_model_name
+                  +" : "+str(prev_model_names))
+        return prev_model_names
+
+    def getFilteredRegionText(cls, region):
+        ## Region에는 줄바꿈만 공백으로 치환하고 그대로
+        region = region.replace('\n', ' ')
+        return region
+
 
     def setDevMasterExcel(self, excel):
         self.xls_file_name = excel
@@ -87,7 +135,7 @@ class Dev_Master:
         if len(chassis)<4:
             return False
         ## chassis[3] : Main SoC. 6=='M1A/M1Ap', 7=='M1Lp/M1LCp', 8=='M8RR'
-        if chassis[3]=='6' or chassis[3]=='7' or chassis[3]=='8':
+        if chassis[3]=='6' or chassis[3]=='8':
             return True
         else:
             return False
@@ -113,6 +161,80 @@ class Dev_Master:
             is_valid = True
         return is_valid
 
+    def isValidDateString(cls, date):
+        if type(date)!=str:
+            return False
+        tokens = date.split("/")
+        if len(tokens)!=3:
+            return False
+
+        if int(tokens[0])<2016 or int(tokens[1])<1 or int(tokens[1])>12 or \
+        int(tokens[2])<0 or int(tokens[2])>31:
+            return False
+
+        return True
+
+    # compare two date String
+    # assume two args are both string as format "yyyy/mm/dd"
+    # ref. convertFloatToDateString()
+    # return None if invalid params
+    # return 0 if date1 == date2
+    # return date1 - date2
+    def compareDateString(cls, date1, date2):
+        # assume args are only string
+        if cls.isValidDateString(date1)==False:
+            return 1
+        if cls.isValidDateString(date2)==False:
+            return -1
+
+        tokens1 = date1.split("/")  ## array : yyyy, mm, dd
+        tokens2 = date2.split("/")
+        year1 = int(tokens1[0])
+        year2 = int(tokens2[0])
+        if year1!=year2:
+            return year1-year2
+        month1 = int(tokens1[1])
+        month2 = int(tokens2[1])
+        if month1!=month2:
+            return month1-month2
+        day1 = int(tokens1[2])
+        day2 = int(tokens2[2])
+        return day1-day2
+
+    def getModelDataFromModelName(self, model_name):
+        for model_data in self.table_data:
+            try:
+                if model_name == model_data[Dev_Meta.idxModelName]:
+                    return model_data
+            except:
+                continue
+        return None
+
+
+    def compareForSort(self, model1, model2):
+        dv_end1 = model1[Dev_Meta.idxDvEnd]
+        dv_end2 = model2[Dev_Meta.idxDvEnd]
+        return self.compareDateString(dv_end1, dv_end2)
+
+    def cmp_to_key(self, mycmp):
+        'Convert a cmp= function into a key= function'
+        class K(object):
+            def __init__(self, obj, *args):
+                self.obj = obj
+            def __lt__(self, other):
+                return mycmp(self.obj, other.obj) < 0
+            def __gt__(self, other):
+                return mycmp(self.obj, other.obj) > 0
+            def __eq__(self, other):
+                return mycmp(self.obj, other.obj) == 0
+            def __le__(self, other):
+                return mycmp(self.obj, other.obj) <= 0
+            def __ge__(self, other):
+                return mycmp(self.obj, other.obj) >= 0
+            def __ne__(self, other):
+                return mycmp(self.obj, other.obj) != 0
+        return K
+
     def updateDevMaster(self, isCheckedLowend):
         self.parseMasterVersion()
         print("ver : "+self.version)
@@ -130,20 +252,53 @@ class Dev_Master:
                 model_data.append(str(row+1))
 
                 ## format excel data
-                model_data[Dev_Meta.idxRegion] = self.getFilteredText(model_data[Dev_Meta.idxRegion])
+                model_data[Dev_Meta.idxRegion] = self.getFilteredRegionText(model_data[Dev_Meta.idxRegion])
                 model_data[Dev_Meta.idxModelName] = self.getFilteredText(model_data[Dev_Meta.idxModelName])
-                model_data[Dev_Meta.idxDvStart] = self.getFilteredText(model_data[Dev_Meta.idxDvStart])
-                model_data[Dev_Meta.idxDvEnd] = self.getFilteredText(model_data[Dev_Meta.idxDvEnd])
+                self.prev_model_names[Dev_Meta.idxModelName] = self.getPrevModelNames(model_data[Dev_Meta.idxModelName])
+                model_data[Dev_Meta.idxDvStart] = self.getFilteredDateText(model_data[Dev_Meta.idxDvStart])
+                model_data[Dev_Meta.idxDvEnd] = self.getFilteredDateText(model_data[Dev_Meta.idxDvEnd])
                 # 기획 담당자 설정
                 model_data[Dev_Meta.idxHwPL+1] = self.getPlanOwnerName(model_data[Dev_Meta.idxRegion])
                 self.table_data.append(model_data)
 
 
         # remove duplicated rows
-        modelName = Dev_Meta.idxModelName
+        idxModelName = Dev_Meta.idxModelName
+        idxDvEndDate = Dev_Meta.idxDvEnd
+
+        # sort by DV end date
+        self.table_data = sorted(self.table_data, key=self.cmp_to_key(self.compareForSort))
+
+
+        # delete same models except for one (earlist dv end date)
         for row in range(0, len(self.table_data)-2):
+            if row>=len(self.table_data)-1:
+                break;
+            row_data = self.table_data[row]
+            dv_end1 = row_data[idxDvEndDate]
             for compare_row in range(len(self.table_data)-1, row, -1):
-                row_data = self.table_data[row]
                 compare_data = self.table_data[compare_row]
-                if row_data[modelName]==compare_data[modelName]:
-                    del(self.table_data[compare_row])
+                dv_end2 = compare_data[idxDvEndDate]
+                compare_result = self.compareDateString(dv_end1, dv_end2)
+                if row_data[idxModelName]==compare_data[idxModelName]:
+                    # print("compare "+dv_end1+", "+dv_end2)
+                    if compare_result==None:
+                        print("compare result is invalid")
+                        if self.isValidDateString(dv_end1)==False:
+                            print("del row_data: "+str(row_data))
+                            print("dv_end1 : "+dv_end1)
+                            del(self.table_data[row])
+                            row=row-1
+                            break;
+                        else:    # dv_end2 is invalid date String
+                            print("del compare_data: "+str(compare_data))
+                            print("dv_end1 : "+dv_end2)
+                            del(self.table_data[compare_row])
+                    elif compare_result<=0:
+                        # print("del compare_row : "+dv_end2)
+                        del(self.table_data[compare_row])
+                    else:       # dv_end of row_data > dv_end of compare_Data
+                        # print("del row : "+dv_end1)
+                        del(self.table_data[row])
+                        row=row-1
+                        break;
