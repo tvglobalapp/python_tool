@@ -98,8 +98,9 @@ class Dev_Master:
         model_list = txt.split("→")
         prev_model_names = []
         if len(model_list)>1:
+            print("exist prev model : "+str(model_list))
             for prev_model in range(0, len(model_list)-1):
-                prev_model_name = model_list[prev_model]
+                prev_model_name = model_list[prev_model].strip()
                 prev_model_name = prev_model_name.split("(")[0].split("\n")[0]
                 prev_model_names.append(prev_model_name)
 
@@ -211,28 +212,54 @@ class Dev_Master:
         return None
 
 
-    def compareForSort(self, model1, model2):
-        dv_end1 = model1[Dev_Meta.idxDvEnd]
-        dv_end2 = model2[Dev_Meta.idxDvEnd]
-        return self.compareDateString(dv_end1, dv_end2)
+    def compareForSort(self, model1, model2, index, second):
+        dv_end1 = model1[index]
+        dv_end2 = model2[index]
+        result = self.compareDateString(dv_end1, dv_end2)
+        if result == 0 and second is not None:
+            second1 = int(model1[second])
+            second2 = int(model2[second])
+            return (second1 - second2)
+        else:
+            return result
 
-    def cmp_to_key(self, mycmp):
+    def cmp_to_key(self, mycmp, index_col, second=None):
         'Convert a cmp= function into a key= function'
         class K(object):
             def __init__(self, obj, *args):
                 self.obj = obj
+                self.index_col = index_col
+                self.index_second = second
             def __lt__(self, other):
-                return mycmp(self.obj, other.obj) < 0
+                return mycmp(self.obj
+                             , other.obj
+                             , self.index_col
+                             , self.index_second) < 0
             def __gt__(self, other):
-                return mycmp(self.obj, other.obj) > 0
+                return mycmp(self.obj
+                             , other.obj
+                             , self.index_col
+                             , self.index_second) > 0
             def __eq__(self, other):
-                return mycmp(self.obj, other.obj) == 0
+                return mycmp(self.obj
+                             , other.obj
+                             , self.index_col
+                             , self.index_second) == 0
             def __le__(self, other):
-                return mycmp(self.obj, other.obj) <= 0
+                return mycmp(self.obj
+                             , other.obj
+                             , self.index_col
+                             , self.index_second) <= 0
             def __ge__(self, other):
-                return mycmp(self.obj, other.obj) >= 0
+                return mycmp(self.obj
+                             , other.obj
+                             , self.index_col
+                             , self.index_second) >= 0
             def __ne__(self, other):
-                return mycmp(self.obj, other.obj) != 0
+                return mycmp(self.obj
+                             , other.obj
+                             , self.index_col
+                             , self.index_second) != 0
         return K
 
     def updateDevMaster(self, isCheckedLowend):
@@ -267,7 +294,9 @@ class Dev_Master:
         idxDvEndDate = Dev_Meta.idxDvEnd
 
         # sort by DV end date
-        self.table_data = sorted(self.table_data, key=self.cmp_to_key(self.compareForSort))
+        self.table_data = sorted(self.table_data
+                                 , key=self.cmp_to_key(self.compareForSort
+                                                       , idxDvEndDate))
 
 
         # delete same models except for one (earlist dv end date)

@@ -27,16 +27,19 @@ project_id = 'ESTREAMER'
 
 # jira issue query
 jql_default = 'project='+project_id+' and '
-jql_model_issue = jql_default+'filter in (L17_ESTREAMER_D_VA_실물검증_TEST)'
-jql_test_issue = jql_default+'filter in (L17_ESTREAMER_D_VA_실물확인_TEST)'
-jql_spec_issue = jql_default+'filter in (L17_ESTREAMER_D_VA_SPEC확인_TEST)'
+jql_model_issue = jql_default+'filter in (L17_ESTREAMER_D_VA_실물검증)'
+jql_test_issue = jql_default+'filter in (L17_ESTREAMER_D_VA_실물확인)'
+jql_spec_issue = jql_default+'filter in (L17_ESTREAMER_D_VA_SPEC확인)'
 
 # E-Streamer S/W 담당자 : JIRA reporter & default assignee
-estreamer_sw = 'ybin.cho'
+estreamer_sw = 'gayoung.lee'
 
 # Jira Login을 위한 session file name
 session_file_name = 'jira_session.xml'
 
+# Jira 에서 issue 조회 시 maxResult개수를 지정해야 한다
+# @ jira_tracker.search_issues [default:50]
+maxResult = 200
 
 # Fileter : 실물검증TEST -> 실물검증
 # filter name : L17_ESTREAMER_D_VA_XXXX_TEST -> L17_ESTREAMER_D_VA_XXXX
@@ -52,6 +55,9 @@ class JIRA_Handler:
         global estreamer_sw
         global session_file_name
         global GetPath
+        global maxResult
+
+        self.maxResultJira = maxResult
 
         self.jira_id=''
         self.pwd=''
@@ -77,7 +83,7 @@ class JIRA_Handler:
 
         self.session_file = GetPath()+session_file_name
 
-        print("JIRA handler init. session file name : "+self.session_file)
+        print("JIRA handler init.")
 
     def saveSession(self):
         ## check login success
@@ -180,7 +186,7 @@ class JIRA_Handler:
         new_issue = self.issue_template.copy()
         new_issue['summary'] = self.concateModelNameForSummary(model_data)
         #new_issue['labels'].append(dev_version)
-        new_issue['labels']=["실물검증TEST"]
+        new_issue['labels']=["실물검증"]
         new_issue['description']= '''
         개발 Master Ver. : {ver}\n
         엑셀 행 번호: {row}\n
@@ -205,7 +211,7 @@ class JIRA_Handler:
         new_issue = self.issue_template.copy()
         new_issue['summary'] = self.concateModelNameForSummary(model_data)+ ' Spec. 확인 요청'
         model_name = model_data[Dev_Meta.idxModelName]
-        new_issue['labels']=["실물검증TEST"]
+        new_issue['labels']=["실물검증"]
         new_issue['description']= '''
         모델 : {color:red}'''+model_name+'{color}\n'
 
@@ -226,7 +232,7 @@ class JIRA_Handler:
 
         tracker = self.jira
         new_issue = self.issue_template.copy()
-        new_issue['summary'] = self.concateModelNameForSummary(model_data)+ ' 실물확인(TEST)'
+        new_issue['summary'] = self.concateModelNameForSummary(model_data)+ ' 실물 확인'
         model_name = model_data[Dev_Meta.idxModelName]
         new_issue['description']= '''
         모델 : {color:red}'''+model_name+'{color}\n'
@@ -268,6 +274,18 @@ class JIRA_Handler:
             print("search failed !. number of result length : "+len(result_list))
             return None
         return result_list[0]
+
+    def resolveIssueForDroppedModel(self, ver, issue_key):
+        tracker = self.jira
+        try:
+            issue = tracker.issue(issue_key)
+            status_name = issue.fields.status.name
+        except:
+            return
+        comment_body = '개발 Master '+ver+' 에서 본 모델 Drop되어 Resolve 합니다.'
+
+        if  status_name != 'Resolved' and status_name != 'Closed':
+            tracker.transition_issue(issue, 'Resolve Issue', comment=comment_body)
 
     def createModelIssueAndSubTasks(self, dev_version, model):
         try:

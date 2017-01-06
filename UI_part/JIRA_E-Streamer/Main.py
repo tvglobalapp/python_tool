@@ -82,10 +82,11 @@ class Main(QtWidgets.QMainWindow, main_ui):
 
         # trye session login
         self.jira_handler.sessionLogin(self)
-        self.dev_master.setDevMasterExcel("C:/Users/heuser/Desktop/★V2.3_17년 Global Development Master_161209.xlsx")
-        #self.dev_master.setDevMasterExcel("C:/Users/heuser/Desktop/★V2.4_17년 Global Development Master_161227.xlsx")
-        self.updateTblMaster()
         self.slotInquiryIssues()
+
+        #self.dev_master.setDevMasterExcel("C:/Users/heuser/Desktop/★V2.3_17년 Global Development Master_161209.xlsx")
+        self.dev_master.setDevMasterExcel("C:/Users/heuser/Desktop/★V2.4_17년 Global Development Master_161227.xlsx")
+        self.updateTblMaster()
 
     def setNeedLoginState(self, isNeedLogin):
         self.chkSession.setVisible(isNeedLogin)
@@ -167,6 +168,9 @@ class Main(QtWidgets.QMainWindow, main_ui):
         self.tblMaster.clear()
         self.tblMaster.setHorizontalHeaderLabels(Main.table_header_master)
 
+        if self.dev_master.xls_file_name is None:
+            return
+
         # reload dev_master_excel : dev_master.table_data
         self.dev_master.updateDevMaster(self.chkLowend.isChecked())
 
@@ -176,7 +180,7 @@ class Main(QtWidgets.QMainWindow, main_ui):
         # set row count of body
         self.tblMaster.setRowCount(total_row)
 
-        for row in range(len(table_data)):
+        for row in range(0, total_row):
             #print("row:"+str(self.table_data[row]))
             row_data = table_data[row]
             self.setDevTableRowData(row, row_data)
@@ -196,11 +200,11 @@ class Main(QtWidgets.QMainWindow, main_ui):
         if self.dev_master.xls_file_name is None:
             return
         self.updateTblMaster()
+        self.tblMaster.update()
 
-        if self.tblJira.rowCount()>0:
-            # JIRA 와 변경점을 check하고 master table의 변경점 column에
-            # 변경사항 내용을 채운다
-            self.checkDiffAndFillMasterTbl()
+        # JIRA 와 변경점을 check하고 master table의 변경점 column에
+        # 변경사항 내용을 채운다
+        self.checkDiffAndFillMasterTbl()
 
     def slotLogin(self):
         print("login clicked ")
@@ -261,7 +265,6 @@ class Main(QtWidgets.QMainWindow, main_ui):
             elif tokens[0].strip().endswith('DV 종료'):
                 return_value['dv_end'] = tokens[1].strip()
             else:
-                ## TBD
                 continue
         return return_value
 
@@ -277,89 +280,69 @@ class Main(QtWidgets.QMainWindow, main_ui):
                           , self.idxDiff_TBL_MASTER
                           , "JIRA 생성 필요(모델/Spec. 확인/실물확인)")
 
-    def checkDiffAndFillMasterTbl(self):
-        print('checkDiffAndFillMAsterTbl starts')
-        # let alias tables and jira data
+
+    def checkDiffTextAndUpdateMasterTbl(self, row, model_name, model_jira, isDropped):
+        ## init. diff contents
+        diff_fields = {}
+        diff_text = ''
+
         tbl_master = self.tblMaster
-        tbl_jira   = self.tblJira
-        jira_data = self.jira_table_data
-
-        # if there is no issue
-        if jira_data is None:
-            for row in range(0, tbl_mastser.rowCount()):
-                self.fillNoJIRAtoMasterTbl(row)
-                self.jira_diff_conents = {}
-            tbl_master.resizeColumnsToContents();
-            tbl_master.resizeRowsToContents();
-            return
-
-        self.jira_diff_conents = {}
-        idxModelName = self.idxModelName_TBL_MASTER
+        previous_model_name = ''
         prev_model_name_list = self.dev_master.prev_model_names
-        # 개발 Master Table에 JIRA issue No.와 변경사항을 채워넣는다
-        for row in range(0, tbl_master.rowCount()):
-            model_name = tbl_master.item(row, idxModelName).text()
-            model_jira = jira_data.get(model_name)
-
-            ## init. diff contents
-            diff_fields = {}
-            diff_text = ''
-
-            previous_model_name = ''
-            if model_jira is None:
-                # Model Name이 변경된 것은 아닌지 점검해보자
-                print("check model name 변경 : "+model_name)
-                prev_model_names = prev_model_name_list.get(model_name)
-                print("prev model lists : "+str(prev_model_names))
-                if (prev_model_names is not None) and len(prev_model_names)>0:
-                    for prev_name in prev_model_names:
-                        print("check prev name : "+prev_name)
-                        model_jira = jira_data.get(prev_name)
+        if model_jira is not None:
+            # check 개발 Master Version 'V -> V 변경점'
+            dev_version         = self.dev_master.version
+            dev_version_jira    = ''
+            dev_version_jira    = model_jira[Main.idxDevMasterVer_TBL_JIRA]
+            if dev_version != dev_version_jira:
+                diff_text = dev_version_jira+'→'+dev_version+'\n'
+        else:
+            # Model Name이 변경된 것은 아닌지 점검
+            print("check model name 변경 : "+model_name)
+            prev_model_names = prev_model_name_list.get(model_name)
+            print("prev model lists : "+str(prev_model_names))
+            if (prev_model_names is not None) and len(prev_model_names)>0:
+                for prev_name in prev_model_names:
+                    print("check prev name : "+prev_name)
+                    try:
+                        model_jira = jira_data.pop(prev_name)
+                    except:
+                        pass
+                    else:
                         if model_jira is not None:
                             previous_model_name = prev_model_name
                             break;
+                        else:
+                            # ??? pop 아이템이 없으면 exception 발생하므로
+                            # 도달할 수 없는 Case
+                            pass
 
-                # Not found in jira even prev. model name
-                if model_jira is None:
-                    self.fillNoJIRAtoMasterTbl(row)
-                    diff_fields['model_jira'] = 'NoIssue'
-                    self.jira_diff_conents[model_name] = diff_fields
-                    continue;
+            # Not found in jira even prev. model name
+            if model_jira is None:
+                self.fillNoJIRAtoMasterTbl(row)
+                diff_fields['model_jira'] = 'NoIssue'
+                self.jira_diff_conents[model_name] = diff_fields
+                return;
 
-                ## Model Name 변경된 Case이다.
-                diff_fields['Model Name'] = previous_model_name
-                diff_text += ('모델명 변경 : '
-                              +previous_model_name
-                              +'→'
-                              +model_name+'\n')
+            ## Model Name 변경된 Case이다.
+            diff_fields['Model Name'] = previous_model_name
+            diff_text += ('모델명 변경 : '
+                          +previous_model_name
+                          +'→'
+                          +model_name+'\n')
 
-            idxJira = self.idxJiraIssueNo_TBL_MASTER
+        idxJira = self.idxJiraIssueNo_TBL_MASTER
+        ## fill Jira Issue No.
+        self.setTableData(tbl_master
+                          , row, idxJira
+                          , model_jira[self.idxModelJIRA_TBL_JIRA])
 
-            ## fill Jira Issue No.
-            self.setTableData(tbl_master
-                              , row, idxJira
-                              , model_jira[self.idxModelJIRA_TBL_JIRA])
+        if isDropped:
+            diff_text += ('모델 Drop (JIRA:Exist, 개발Master:Drop)\n')
+            for col_index in range(Main.idxJiraIssueNo_TBL_MASTER):
+                self.setTableData(tbl_master, row, col_index,  '-')
 
-
-            # check 개발 Master Version and set to Header 'V -> V 변경점'
-            dev_version         = self.dev_master.version
-            dev_version_jira    = model_jira[Main.idxDevMasterVer_TBL_JIRA]
-            if dev_version != dev_version_jira:
-                diff_ver = dev_version_jira+'→'+dev_version
-                label_header_diff = Main.table_header_master[Main.idxDiff_TBL_MASTER]
-                label_header_diff = diff_ver+' '+label_header_diff
-                new_header = Main.table_header_master.copy()
-                new_header[Main.idxDiff_TBL_MASTER] = label_header_diff
-                self.tblMaster.setHorizontalHeaderLabels(new_header)
-            else:
-                self.tblMaster.setHorizontalHeaderLabels(Main.table_header_master)
-
-                # diff_fields['개발 Master Ver.'] = dev_version
-                # diff_text += ('개발 Master Ver. : '
-                #               +dev_version_jira
-                #               +'→'
-                #               +dev_version+'\n')
-
+        else:
             # check 개발 Master 행번호
             idxDevRow = self.idxDevMasterRow_TBL_MASTER
             dev_master_row      = tbl_master.item(row, idxDevRow).text()
@@ -379,15 +362,81 @@ class Main(QtWidgets.QMainWindow, main_ui):
                 diff_fields['DV 종료'] = dv_end
                 diff_text += ('DV 종료 : '+dv_end_jira
                               +'→'+dv_end+'\n')
-            if diff_text == '':
+            if  diff_text == '':
                 diff_text = '변경점 없음'
                 self.jira_diff_conents[model_name] = 'No Change'
             else:
                 self.jira_diff_conents[model_name] = diff_fields
 
-            self.setTableData(tbl_master, row, self.idxDiff_TBL_MASTER, diff_text.strip())
+        self.setTableData(tbl_master, row
+                          , self.idxDiff_TBL_MASTER
+                          , diff_text.strip())
+        return diff_text
 
+    def checkDiffAndFillMasterTbl(self):
+        print('checkDiffAndFillMAsterTbl starts')
+        # let alias tables and jira data
+        tbl_master = self.tblMaster
+        tbl_jira   = self.tblJira
+
+        if tbl_master.rowCount()==0:
+            print("tbl_master rowCount : "+str(tbl_master.rowCount()))
+            return
+
+        # if there is no issue
+        if self.jira_table_data is None:
+            for row in range(0, tbl_mastser.rowCount()):
+                self.fillNoJIRAtoMasterTbl(row)
+                self.jira_diff_conents = {}
+            tbl_master.resizeColumnsToContents();
+            tbl_master.resizeRowsToContents();
+            return
+
+        self.jira_diff_conents = {}
+        idxModelName = self.idxModelName_TBL_MASTER
+        jira_data = self.jira_table_data.copy()
+        num_jira_data = len(jira_data.keys())
+
+        # 개발 Master Table에 JIRA issue No.와 변경사항을 채워넣는다
+        num_tbl_master = tbl_master.rowCount()
+        for row in range(0, num_tbl_master):
+            model_name = ''
+            model_jira = None
+            print(str(row)+": remain models : "+str(jira_data.keys()))
+            if row >=tbl_master.rowCount():
+                print("row : ", str(row))
+                model_name, model_jira = jira_data.popitem()
+                print("model name : "+model_name)
+                print("is None : "+ str(model_jira is None))
+            else:
+                model_name = tbl_master.item(row, idxModelName).text()
+                try:
+                    model_jira = jira_data.pop(model_name)
+                except:
+                    pass
+
+            self.checkDiffTextAndUpdateMasterTbl(row, model_name, model_jira, False)
         # End of Loop
+
+        ## Drop model들을 master table 마지막에 append해준다.
+        num_dropped_model = len(jira_data)
+        print("num dropped model : "+str(num_dropped_model))
+
+        tbl_master.setRowCount(num_tbl_master+num_dropped_model)
+
+        for remain_model in range(num_dropped_model):
+            model_name, model_jira = jira_data.popitem()
+            print(str(remain_model)+ " : ", model_name, str(model_jira))
+
+            row_index = num_tbl_master+remain_model
+
+            self.checkDiffTextAndUpdateMasterTbl(row_index
+                                                 , model_name, model_jira, True)
+            # set Model Name
+            self.setTableData(tbl_master, row_index
+                              , Main.idxModelName_TBL_MASTER
+                              , model_name)
+
         tbl_master.resizeColumnsToContents();
         tbl_master.resizeRowsToContents();
 
@@ -423,9 +472,12 @@ class Main(QtWidgets.QMainWindow, main_ui):
         #get all issues of model jira and sub-tasks
         tracker = self.jira_tracker
         jira_handler = self.jira_handler
-        all_jira_models = tracker.search_issues(jira_handler.jql_model)
-        all_jira_spec   = tracker.search_issues(jira_handler.jql_spec)
-        all_jira_test   = tracker.search_issues(jira_handler.jql_test)
+        all_jira_models = tracker.search_issues(jira_handler.jql_model
+                                                , maxResults=jira_handler.maxResultJira)
+        all_jira_spec   = tracker.search_issues(jira_handler.jql_spec
+                                                , maxResults=jira_handler.maxResultJira)
+        all_jira_test   = tracker.search_issues(jira_handler.jql_test
+                                                , maxResults=jira_handler.maxResultJira)
         num_all_models = len(all_jira_models)
 
         self.tblJira.clear()
@@ -442,6 +494,7 @@ class Main(QtWidgets.QMainWindow, main_ui):
         #           , "DV종료", "Spec. Name", "Image Ver."]
         # jira_table_data 변수에 모델 별로 데이터를 채워 넣는다
         self.jira_table_data = {}
+        ordered_jira_data = []
         for issue in all_jira_models:
             description = issue.raw['fields']['description']
             issue_parsed = self.parseDescriptionField(description)
@@ -503,69 +556,97 @@ class Main(QtWidgets.QMainWindow, main_ui):
                         row_data[self.idxSpecName_TBL_JIRA] =label
 
             self.jira_table_data[issue_parsed['model_name']] = row_data
+            ordered_jira_data.append(row_data)
 
         ## 여기서 부터는 JIRA Table Widget에 채워 넣는다.
         dev_table = self.tblMaster
         jira_table = self.tblJira
 
-        for row in range(0, dev_table.rowCount()):
+        ## 삭제해나갈 것이기 때문에 clone을 사용해야 함
+        jira_data = self.jira_table_data.copy()
+        num_jira_data = len(jira_data)
+
+        # sort
+        master = self.dev_master
+        ordered_jira_data = sorted(ordered_jira_data
+                                   , key=master.cmp_to_key(master.compareForSort
+                                                           , Main.idxDvEnd_TBL_JIRA
+                                                           , Main.idxDevMasterRow_TBL_JIRA))
+
+        for row in range(0, max(dev_table.rowCount(), num_jira_data)):
             model_data_jira = None
             try:
-                # try get model name from 개발 Master table
-                idxModelName = self.idxModelName_TBL_MASTER
-                model_name = self.tblMaster.item(row, idxModelName).text()
-                model_data_jira = self.jira_table_data.get(model_name)
+                model_name = ordered_jira_data[row][Main.idxModelName_TBL_JIRA]
+                model_data_jira = jira_data.get(model_name)
             except:
-                if model_data_jira is None:
-                    self.fillNoJIRAtoMasterTbl(row)
-                print("model name : "+model_name+", "+model_data_jira[self.idxModelName_TBL_JIRA])
+                if dev_table.rowCount()>0 and row>=num_jira_data:
+                    try:
+                        model_name = dev_table.item(row, Main.idxModelName_TBL_MASTER)
+                        model_name = model_name.text()
+                    except:
+                        model_name = ''
+
+            # try:
+            #     # try get model name from 개발 Master table
+            #     idxModelName = self.idxModelName_TBL_MASTER
+            #     if row>=dev_table.rowCount():
+            #         # 개발 Master 없고, JIRA에만 있는 model 즉, drop model이다
+            #         (model_name, model_data_jira) = jira_data.popitem()
+            #     else:
+            #         model_name = self.tblMaster.item(row, idxModelName).text()
+            #         model_data_jira = jira_data.pop(model_name)
+            # except:
+            #     if model_data_jira is None:
+            #
+            #         print("model data jira is not found : "+str(row))
+            #         self.fillNoJIRAtoMasterTbl(row)
+            #     print("model name : "+model_name)
+            #     continue
+            # else:
+            #     if model_data_jira is None:
+            #         continue
+
+            # set Model Name
+            self.setTableData(jira_table, row
+                              , self.idxModelName_TBL_JIRA
+                              , model_name)
+
+            if model_data_jira is None or model_name != model_data_jira[self.idxModelName_TBL_JIRA] or len(model_name)==0:
+                self.fillNoJIRAtoJiraTbl(row, 'model_jira')
+                self.fillNoJIRAtoJiraTbl(row, 'spec_jira')
+                self.fillNoJIRAtoJiraTbl(row, 'test_jira')
+
+                if model_data_jira is not None:
+                    print("Need to check !!!! : "+model_name+", "
+                          + model_data_jira[self.idxModelName_TBL_JIRA])
                 continue
-            else:
-                # set Model Name
-                self.setTableData(jira_table, row
-                                  , self.idxModelName_TBL_JIRA
-                                  , model_name)
 
-                if model_data_jira is None or model_name != model_data_jira[self.idxModelName_TBL_JIRA] or len(model_name)==0:
-                    self.fillNoJIRAtoJiraTbl(row, 'model_jira')
-                    self.fillNoJIRAtoJiraTbl(row, 'spec_jira')
-                    self.fillNoJIRAtoJiraTbl(row, 'test_jira')
-
-                    if model_data_jira is not None:
-                        print("Need to check !!!! : "+model_name+", "
-                              + model_data_jira[self.idxModelName_TBL_JIRA])
-                    continue
-
-                # 하나의 row에 대해 column 단위로 반복 loop하여 UI에 값을 set한다
-                for idx_table_jira in range(self.idxModelJIRA_TBL_JIRA
-                                            , self.idxImageVer_TBL_JIRA+1):
-                    if idx_table_jira in (self.idxTestJIRA_TBL_JIRA
-                                          , self.idxSpecConfimJIRA_TBL_JIRA):
-                        # set Test JIRA Issue No.
-                        # 일단 실물 검증 JIRA index에  issue객체를 넣어두었다
-                        # string 아니었므로 주의가 필요 (key 멤버로 출력)
-                        if model_data_jira[idx_table_jira] is None:
-                            if idx_table_jira == self.idxSpecConfimJIRA_TBL_JIRA:
-                                self.fillNoJIRAtoJiraTbl(row, 'spec_jira')
-                            else:
-                                self.fillNoJIRAtoJiraTbl(row, 'test_jira')
+            # 하나의 row에 대해 column 단위로 반복 loop하여 UI에 값을 set한다
+            for idx_table_jira in range(self.idxModelJIRA_TBL_JIRA
+                                        , self.idxImageVer_TBL_JIRA+1):
+                if idx_table_jira in (self.idxTestJIRA_TBL_JIRA
+                                      , self.idxSpecConfimJIRA_TBL_JIRA):
+                    # set Test JIRA Issue No.
+                    # 일단 실물 검증 JIRA index에  issue객체를 넣어두었다
+                    # string 아니었므로 주의가 필요 (key 멤버로 출력)
+                    if model_data_jira[idx_table_jira] is None:
+                        if idx_table_jira == self.idxSpecConfimJIRA_TBL_JIRA:
+                            self.fillNoJIRAtoJiraTbl(row, 'spec_jira')
                         else:
-                            self.setTableData(jira_table, row
-                                              , idx_table_jira
-                                              , model_data_jira[idx_table_jira].key)
+                            self.fillNoJIRAtoJiraTbl(row, 'test_jira')
                     else:
-                        # set Model Name, 개발 Master Ver., ...
                         self.setTableData(jira_table, row
                                           , idx_table_jira
-                                          , model_data_jira[idx_table_jira])
+                                          , model_data_jira[idx_table_jira].key)
+                else:
+                    # set Model Name, 개발 Master Ver., ...
+                    self.setTableData(jira_table, row
+                                      , idx_table_jira
+                                      , model_data_jira[idx_table_jira])
 
-        if self.tblJira.rowCount()>0:
-            self.lblStatus.setText("No JIRA issues for E-Streamer 검증")
-        else:
-            self.tblJira.resizeColumnsToContents();
-            self.tblJira.resizeRowsToContents();
-            self.checkDiffAndFillMasterTbl()
-            self.lblStatus.setText(str(self.tblJira.rowCount())+" issues found")
+        self.tblJira.resizeColumnsToContents();
+        self.tblJira.resizeRowsToContents();
+        self.checkDiffAndFillMasterTbl()
 
     def slotChkDiff(self):
         self.checkDiffAndFillMasterTbl()
@@ -602,9 +683,38 @@ class Main(QtWidgets.QMainWindow, main_ui):
             is_model_name_changed = False
             is_create_model_jira = False
             model_issue = None
+            diff_text = dev_table.item(row, Main.idxDiff_TBL_MASTER).text()
+
+            if diff_text.find('변경점 없음')>=0:
+                continue
 
             if model_data is None:
-                print("Need to check. why model data not exist : "+model_name)
+                # drop model
+
+                if diff_text.find('모델 Drop')>=0:
+                    print('drop model : resolve 처리 '+model_name)
+                    jira_data = jira_table_data.get(model_name)
+
+                    # 1. model issue를 resolve한다
+                    model_issue_key = jira_data[Main.idxModelJIRA_TBL_JIRA]
+                    jira_handler.resolveIssueForDroppedModel(ver
+                                                             , model_issue_key)
+
+                    #2. resolve subtask1 : spec. 확인 issue
+                    spec_issue = jira_data[Main.idxSpecConfimJIRA_TBL_JIRA]
+                    if spec_issue is not None:
+                        jira_handler.resolveIssueForDroppedModel(ver
+                                                                , spec_issue.key)
+
+                    #3. resolve subtask2 : 실물확인 issue
+                    test_issue = jira_data[Main.idxTestJIRA_TBL_JIRA]
+                    if test_issue is not None:
+                        jira_handler.resolveIssueForDroppedModel(ver
+                                                                , test_issue.key)
+                else:
+                    print("Need to check.")
+                    print("why model data not exist (NOT Drop model): "
+                          +model_name)
                 continue
 
             # 1. model name 변경 check한다
@@ -667,19 +777,21 @@ class Main(QtWidgets.QMainWindow, main_ui):
                     print("model name : "+model_name)
                 continue;
 
-            ## 2-1. check & create sub-task1 : spec.확인요청 JIRA
+            ## 3-1. check & create sub-task1 : spec.확인요청 JIRA
             if model_data_jira[self.idxSpecConfimJIRA_TBL_JIRA] is None:
-                spec_fields = self.getFieldsForSpecCheckIssue(model, model_issue)
+                spec_fields = jira_handler.getFieldsForSpecCheckIssue(model_data
+                                                                      , model_issue)
                 jira.create_issue(fields=spec_fields)
-            ## 3.의 model issue update 진행 필요
+            ## 4.의 model issue update 진행 필요
 
-            ## 2-2. check & create sub-task2 : 실물확인 JIRA
+            ## 3-2. check & create sub-task2 : 실물확인 JIRA
             if model_data_jira[self.idxTestJIRA_TBL_JIRA] is None:
-                test_fields = self.getFieldsForTestIssue(model, model_issue)
+                test_fields = jira_handler.getFieldsForTestIssue(model_data
+                                                                 , model_issue)
                 jira.create_issue(fields=test_fields)
-            ## 3.의 model issue update 진행 필요
+            ## 4.의 model issue update 진행 필요
 
-            # 3. Update fields of model issue
+            # 4. Update fields of model issue
             model_fields = jira_handler.getFieldsForModelIssue(ver, model_data)
             model_issue.update(fields=model_fields)
 
