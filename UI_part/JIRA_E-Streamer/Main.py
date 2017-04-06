@@ -1,3 +1,5 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
 from PyQt5 import uic, QtWidgets
 import sys
 from  JIRA_Handle import *
@@ -82,11 +84,13 @@ class Main(QtWidgets.QMainWindow, main_ui):
 
         # trye session login
         self.jira_handler.sessionLogin(self)
+
         self.slotInquiryIssues()
+        #self.dev_master.setDevMasterExcel("C:/Users/heuser/Desktop/★V2.5_17년 Global Development Master_170111(2).xlsx")
 
         #self.dev_master.setDevMasterExcel("C:/Users/heuser/Desktop/★V2.3_17년 Global Development Master_161209.xlsx")
-        self.dev_master.setDevMasterExcel("C:/Users/heuser/Desktop/★V2.4_17년 Global Development Master_161227.xlsx")
-        self.updateTblMaster()
+        #self.dev_master.setDevMasterExcel("C:/Users/heuser/Desktop/★V2.4_17년 Global Development Master_161227.xlsx")
+        #self.updateTblMaster()
 
     def setNeedLoginState(self, isNeedLogin):
         self.chkSession.setVisible(isNeedLogin)
@@ -110,7 +114,11 @@ class Main(QtWidgets.QMainWindow, main_ui):
         ## Open File Dialog (개발 Master 장표 선택)
         fDialog = QtWidgets.QFileDialog(self)
         fDialog.setAcceptMode(QtWidgets.QFileDialog.AcceptOpen)
-        excel = fDialog.getOpenFileName(self, '개발 Master 장표 열기',"C://Users//heuser//Desktop", filter='*.xlsx')[0]
+        excel = fDialog.getOpenFileName(self
+                                        , '개발 Master 장표 열기'
+                                        #,"C://Users//heuser//Desktop"
+                                        , "C://"
+                                        , filter='*.xlsx')[0]
         if len(excel)>0:
             self.dev_master.setDevMasterExcel(excel)
         print(excel)
@@ -263,7 +271,9 @@ class Main(QtWidgets.QMainWindow, main_ui):
             elif tokens[0].strip().endswith('Model Name'):
                 return_value['model_name'] = tokens[1].strip()
             elif tokens[0].strip().endswith('DV 종료'):
-                return_value['dv_end'] = tokens[1].strip()
+                dv_end = tokens[1].strip()
+                dev_master = self.dev_master
+                return_value['dv_end'] = dev_master.getFilteredDateText(dv_end)
             else:
                 continue
         return return_value
@@ -402,12 +412,12 @@ class Main(QtWidgets.QMainWindow, main_ui):
         for row in range(0, num_tbl_master):
             model_name = ''
             model_jira = None
-            print(str(row)+": remain models : "+str(jira_data.keys()))
+            #print(str(row)+": remain models : "+str(jira_data.keys()))
             if row >=tbl_master.rowCount():
-                print("row : ", str(row))
+                #print("row : ", str(row))
                 model_name, model_jira = jira_data.popitem()
-                print("model name : "+model_name)
-                print("is None : "+ str(model_jira is None))
+                #print("model name : "+model_name)
+                #print("is None : "+ str(model_jira is None))
             else:
                 model_name = tbl_master.item(row, idxModelName).text()
                 try:
@@ -469,6 +479,9 @@ class Main(QtWidgets.QMainWindow, main_ui):
         if self.login_user is None:
             return
 
+        self.lblStatus.setText("Inquirying JIRA issues ... ")
+        self.lblStatus.update()
+
         #get all issues of model jira and sub-tasks
         tracker = self.jira_tracker
         jira_handler = self.jira_handler
@@ -487,6 +500,9 @@ class Main(QtWidgets.QMainWindow, main_ui):
         if num_all_models==0:
             # TBD : clear diff clause on maser
             self.checkDiffAndFillMasterTbl()
+            self.lblStatus.setText("Number Of Inquiried Issue : "
+                                   +str(self.tblJira.rowCount()))
+            self.lblStatus.update()
             return
 
         # header : ["모델명","모델JIRA","Spec.확인JIRA", "실물검증JIRA",
@@ -586,26 +602,6 @@ class Main(QtWidgets.QMainWindow, main_ui):
                     except:
                         model_name = ''
 
-            # try:
-            #     # try get model name from 개발 Master table
-            #     idxModelName = self.idxModelName_TBL_MASTER
-            #     if row>=dev_table.rowCount():
-            #         # 개발 Master 없고, JIRA에만 있는 model 즉, drop model이다
-            #         (model_name, model_data_jira) = jira_data.popitem()
-            #     else:
-            #         model_name = self.tblMaster.item(row, idxModelName).text()
-            #         model_data_jira = jira_data.pop(model_name)
-            # except:
-            #     if model_data_jira is None:
-            #
-            #         print("model data jira is not found : "+str(row))
-            #         self.fillNoJIRAtoMasterTbl(row)
-            #     print("model name : "+model_name)
-            #     continue
-            # else:
-            #     if model_data_jira is None:
-            #         continue
-
             # set Model Name
             self.setTableData(jira_table, row
                               , self.idxModelName_TBL_JIRA
@@ -647,6 +643,9 @@ class Main(QtWidgets.QMainWindow, main_ui):
         self.tblJira.resizeColumnsToContents();
         self.tblJira.resizeRowsToContents();
         self.checkDiffAndFillMasterTbl()
+        self.lblStatus.setText("Number Of Inquiried Issue : "
+                               +str(self.tblJira.rowCount()))
+        self.lblStatus.update()
 
     def slotChkDiff(self):
         self.checkDiffAndFillMasterTbl()

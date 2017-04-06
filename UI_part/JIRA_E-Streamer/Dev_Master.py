@@ -23,6 +23,9 @@ class Dev_Meta:
     idxChassis         = 13
     idxDvStart         = 34
     idxDvEnd           = 37
+    ## Drop 모델에 대한 음영색
+    ## drop 모델에 커서 위치 후 음영 - 다른 색 진입하면 RGB color 값 확인 가능
+    DropModelRGB       = [146, 208, 80]
 
 class Dev_Master:
     global meta_info
@@ -128,7 +131,7 @@ class Dev_Master:
         try:
             tokens = self.xls_file_name.split('/')
             file_name = tokens[len(tokens)-1]
-            self.version = file_name.split('_')[0]
+            self.version = file_name.split('_')[0].split('★')[1]
         except:
             pass
 
@@ -150,7 +153,8 @@ class Dev_Master:
 
         if type(grade)!=str:
             grade=''
-        if rowdata[Dev_Meta.idxComment]=='Drop':     ## 1) 'Drop' model
+        if rowdata[Dev_Meta.idxComment]=='Drop' or \
+            rowdata[Dev_Meta.idxComment].find("개발진행 X")>=0:   ## 1) 'Drop' model
             is_valid = False
         elif rowdata[Dev_Meta.idxModelName]=='':     ## 2) Model Name empty
             is_valid = False
@@ -274,6 +278,10 @@ class Dev_Master:
 
         for row in range(Dev_Meta.idxStartModelInfo, ws.nrows):
             model_data = ws.row_values(row)
+
+            # check whether drop model
+            cell = ws.cell(row, Dev_Meta.idxComment)
+
             if self.isValidLowendModel(model_data, isCheckedLowend):
                 total_row+=1
                 model_data.append(str(row+1))

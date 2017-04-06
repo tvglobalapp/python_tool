@@ -14,8 +14,7 @@ def GetPath():
     else:
         return ''
 
-
-jira_usr = jira.config.get_jira('hlm')
+#jira_usr = jira.config.get_jira('hlm')
 
 # HLM Dev. Tracker
 hlm_dev_url = "http://hlm.lge.com/issue"
@@ -23,6 +22,7 @@ hlm_dev_url = "http://hlm.lge.com/issue"
 hlm_q_url = "http://hlm.lge.com/qi"
 
 # Project Id
+# project_id = 'SSP'
 project_id = 'ESTREAMER'
 
 # jira issue query
@@ -31,8 +31,14 @@ jql_model_issue = jql_default+'filter in (L17_ESTREAMER_D_VA_실물검증)'
 jql_test_issue = jql_default+'filter in (L17_ESTREAMER_D_VA_실물확인)'
 jql_spec_issue = jql_default+'filter in (L17_ESTREAMER_D_VA_SPEC확인)'
 
+
+#jql_model_issue = jql_default+'filter in (L17_ESTREAMER_D_VA_실물검증_TEST)'
+#jql_test_issue = jql_default+'filter in (L17_ESTREAMER_D_VA_실물확인_TEST)'
+#jql_spec_issue = jql_default+'filter in (L17_ESTREAMER_D_VA_SPEC확인_TEST)'
+
 # E-Streamer S/W 담당자 : JIRA reporter & default assignee
 estreamer_sw = 'gayoung.lee'
+#estreamer_sw = 'ybin.cho'
 
 # Jira Login을 위한 session file name
 session_file_name = 'jira_session.xml'
@@ -42,10 +48,11 @@ session_file_name = 'jira_session.xml'
 maxResult = 200
 
 # Fileter : 실물검증TEST -> 실물검증
+# project_id = 'SSP' -> 'ESTREAMER'
 # filter name : L17_ESTREAMER_D_VA_XXXX_TEST -> L17_ESTREAMER_D_VA_XXXX
 
 class JIRA_Handler:
-    main_issue_watchers = ['ybin.cho', 'gayoung.lee']
+    main_issue_watchers = ['ybin.cho'] #, 'gayoung.lee']
     def __init__(self, tracker):
         # jira server url
         global hlm_dev_url, hlm_q_url
