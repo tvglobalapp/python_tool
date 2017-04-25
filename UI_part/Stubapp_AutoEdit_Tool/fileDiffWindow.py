@@ -27,7 +27,7 @@ class fileDiffWindow(QtWidgets.QDialog):
             orderingBuffer[value[0]] = orderingChangeList[1][value[0]]
         fullBuffer = orderingChangeList
         fullBuffer[1] = orderingBuffer
-        
+
         self.orderingChangeList = fullBuffer
         self.platformName = platformName
         self.platform_dic = platform_dic
@@ -75,6 +75,9 @@ class fileDiffWindow(QtWidgets.QDialog):
             f = codecs.open(path,'r',encoding="utf8")
             applist_json = json.loads(f.read())
             f.close()
+
+            if 'applications_common' in applist_json.keys():
+                new_applist_json['applications_common'] = applist_json['applications_common']
 
             new_applist_json['applications_dosci'] = applist_json['applications_dosci']
             new_applist_json['applications_dobci'] = applist_json['applications_dobci']
