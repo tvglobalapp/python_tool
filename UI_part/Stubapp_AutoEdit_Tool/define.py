@@ -1,0 +1,22 @@
+LOCAL_BG_COLOR = 0
+SERVER_BG_COLOR = 1
+LOCAL_TITLE = 2
+SERVER_TITLE = 3
+ERR_TYPE = 4
+
+LOCAL_LARGE_ICON = 0
+SERVER_LARGE_ICON = 1
+LOCAL_SMALL_ICON = 2
+SERVER_SMALL_ICON = 3
+
+##ordering 문서 title define
+EXCEL_COUNTRY_NAME = 3
+EXCEL_LAUNCHER = 5
+EXCEL_APP_NAME = 7
+EXCEL_APP_ID = 9
+EXCEL_APP_DISPLAY = 10
+
+##Server Ordering File명 중 날짜 index
+# ex) (W17H)_Ordering(WEBOS)_20170227_021616.xls
+# _를 기준으로 split하기 때문에 배열의 2번 index에 20170227이 들어가기 때문에 index를 2로 define함.
+DATE_INDEX = 2

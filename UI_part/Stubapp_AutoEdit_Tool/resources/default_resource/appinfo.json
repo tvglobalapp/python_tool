@@ -1,0 +1,19 @@
+{
+    "title": "",
+    "id": "",
+    "requiredEULA" : "generalTerms",
+    "bgImage": "../common/default_preview.png",
+    "splashBackground": "../common/default_splash.png",
+    "iconColor": "",
+    "bgColor": "",
+    "version": "0.0.1",
+    "vendor": "LG Electronics, Inc.",
+    "type": "stub",
+    "main": "index.html",
+    "icon": "icon.png",
+    "largeIcon": "largeIcon.png",
+    "uiRevision": 2,
+    "class": {
+            "hidden": true
+    }
+}
