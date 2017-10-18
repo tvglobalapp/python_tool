@@ -1,66 +1,54 @@
 import xlrd
 #import time
 
-# weekdaystr=["(월)", "(화)", "(수)", "(목)", "(금)", "(토)", "(일)"]
-class Dev_Meta:
-    ''' 개발 Master 장표의 Meta 정보들에 대한 constant 관리 class
-    '''
-    ## 개발 Master의 개발/모델 년도
-    devYear             = 2016
-    modelYear           = devYear+1
-
-    ##개발 Master의 row index
-    idxHeader             = 2
-    idxStartModelInfo     = 3
-
-    ##개발 Master의 column index
-    idxComment         = 0
-    idxRegion          = 2
-    idxModelName       = 6
-    idxDevPL           = 7
-    idxHwPL            = 8
-    idxGrade           = 11
-    idxChassis         = 13
-    idxDvStart         = 34
-    idxDvEnd           = 37
-    ## Drop 모델에 대한 음영색
-    ## drop 모델에 커서 위치 후 음영 - 다른 색 진입하면 RGB color 값 확인 가능
-    DropModelRGB       = [146, 208, 80]
-
 class Dev_Master:
     global meta_info
 
-    def __init__(self, xls=None):
+    def __init__(self, settings=None):
         self.table_data=[];
 
         # 개발  Master Version과 File명
         self.version = ''
-        self.xls_file_name = xls
+        self.xls_file_name = None
+
+        self.settings = settings
 
         # key : final model_name, value : list of previous model names
         # ex. A→B→C 인 모델의 경우 {'C': ['A', 'B']}
         self.prev_model_names = {}
 
     ## 지역 별 기획 담당자
-    def getPlanOwnerName(cls, region):
+    def getPlanOwnerName(self, region):
         # set 기획 담당
         planOwner=''
         if region.find('한국')>=0:
-            planOwner = '이동현J'
+            planOwner = self.settings.owner_plan['KR']
         elif region.find('북미')>=0:
-            planOwner = '박정용J'
-        elif region.find('북미')>=0:
-            planOwner = '박정용J'
-        elif region.find('유럽')>=0 or region.find('CIS')>=0:
-            planOwner = '안태규Y'
+            planOwner = self.settings.owner_plan['US']
+        elif region.find('유럽')>=0:
+            planOwner = self.settings.owner_plan['EU']
+        elif region.find('CIS')>=0:
+            planOwner = self.settings.owner_plan['CIS']
         elif region.find('인도')>=0 or region.find('아주')>=0 \
-            or region.find('중아')>=0 or region.find('이스라엘')>=0 \
+            or region.find('필리핀')>=0:
+            planOwner = self.settings.owner_plan['AJ']
+        elif region.find('중아')>=0 or region.find('이스라엘')>=0 \
             or region.find('이란')>=0:
-            planOwner = '이현석Y'
+            planOwner = self.settings.owner_plan['JA']
         elif region.find('브라질')>=0 or region.find('칠레')>=0 \
-            or region.find('에콰도르')>=0 or region.find('콜롬비아')>=0 \
-            or region.find('파나마')>=0:
-            planOwner = '김보미Y'
+            or region.find('에콰도르')>=0 or region.find('페루')>=0 \
+            or region.find('아르헨티나')>=0:
+            planOwner = self.settings.owner_plan['BR']
+        elif region.find('콜롬비아')>=0 or region.find('파나마')>=0:
+            planOwner = self.settings.owner_plan['CO']
+        elif region.find('대만')>=0:
+            planOwner = self.settings.owner_plan['TW']
+        elif region.find('일본')>=0:
+            planOwner = self.settings.owner_plan['JP']
+        elif region.find('중국')>=0:
+            planOwner = self.settings.owner_plan['CN']
+        elif region.find('홍콩')>=0:
+            planOwner = self.settings.owner_plan['HK']
         else:
             planOwner = 'N/A'
         return planOwner
@@ -71,19 +59,19 @@ class Dev_Master:
         date = xdate.xldate_as_datetime(fDate, 0) ## datemode - 0 : 1900-base, 1 : 1904-base
         return str(date.year)+"/"+str(date.month)+"/"+str(date.day)
 
-    def getFilteredDateText(cls, txt):
+    def getFilteredDateText(self, txt):
         ## Date Format -> String "MM/DD"
         if type(txt) in [float, int]:
-            return cls.convertFloatToDateString(txt)
+            return self.convertFloatToDateString(txt)
 
-        filteredTxt = cls.getFilteredText(txt)
+        filteredTxt = self.getFilteredText(txt)
         list_date = filteredTxt.split("/")
         if len(list_date)==2:
             mm = list_date[0]
             if int(mm)>10:
-                yy=str(Dev_Meta.devYear)
+                yy=str(int(self.settings.mp_year)-1)
             else:
-                yy=str(Dev_Meta.modelYear)
+                yy=str(self.settings.mp_year)
         else:
             #print("list_date : "+filteredTxt)
             return filteredTxt
@@ -144,26 +132,45 @@ class Dev_Master:
         else:
             return False
 
-    def isValidLowendModel(self, rowdata, checkOption=False):
+    def isValidModelToDisplay(self, rowdata, checkLowendOption=False):
         if len(rowdata)<14:
             return False
 
-        chassis=rowdata[Dev_Meta.idxChassis]
-        grade = rowdata[Dev_Meta.idxGrade]
+        chassis=rowdata[self.settings.col_chassis]
+        grade = rowdata[self.settings.col_grade]
 
         if type(grade)!=str:
             grade=''
-        if rowdata[Dev_Meta.idxComment]=='Drop' or \
-            rowdata[Dev_Meta.idxComment].find("개발진행 X")>=0:   ## 1) 'Drop' model
-            is_valid = False
-        elif rowdata[Dev_Meta.idxModelName]=='':     ## 2) Model Name empty
-            is_valid = False
-        elif chassis=='' or chassis=='TBD' or \
-           (checkOption==True and \
-           (self.isLowendModel(chassis)==False or grade.endswith('D_VA')==False)):
-            is_valid = False
-        else:
-            is_valid = True
+
+        is_valid = True
+        history = rowdata[self.settings.col_history]
+        for drop_keyword in self.settings.drop_model_keywords:
+            if history.find(drop_keyword)>=0:
+                is_valid=False
+                break
+        if is_valid:
+            is_valid_main_soc = False
+            main_soc = rowdata[self.settings.col_mainsoc]
+            if checkLowendOption is False:
+                for webos_mainsoc in self.settings.mainsocs_webos:
+                    if main_soc.find(webos_mainsoc)>=0:
+                        is_valid_main_soc = True
+                        rowdata[self.settings.col_mainsoc+1] = 'webOS'
+                        break
+            if is_valid_main_soc is False:
+                for lowend_mainsoc in self.settings.mainsocs_lowend:
+                    if main_soc.find(lowend_mainsoc)>=0:
+                        is_valid_main_soc = True
+                        rowdata[self.settings.col_mainsoc+1] = 'Lowend'
+                        break
+            if is_valid_main_soc is False:
+                is_valid = False
+        if is_valid:
+            if rowdata[self.settings.col_model_name]=='':
+                is_valid = False
+        if is_valid:
+            if chassis=='' or chassis=='TBD' or grade.endswith('D_VA')==False:
+                is_valid = False
         return is_valid
 
     def isValidDateString(cls, date):
@@ -209,7 +216,7 @@ class Dev_Master:
     def getModelDataFromModelName(self, model_name):
         for model_data in self.table_data:
             try:
-                if model_name == model_data[Dev_Meta.idxModelName]:
+                if model_name == model_data[self.settings.col_model_name]:
                     return model_data
             except:
                 continue
@@ -268,7 +275,7 @@ class Dev_Master:
 
     def updateDevMaster(self, isCheckedLowend):
         self.parseMasterVersion()
-        print("ver : "+self.version)
+        print("chkedLowend:"+str(isCheckedLowend)+", ver : "+self.version)
         workbook = xlrd.open_workbook(self.xls_file_name)
         ws = workbook.sheet_by_index(1)
 
@@ -276,35 +283,41 @@ class Dev_Master:
         self.table_data.clear();
         total_row = 0;
 
-        for row in range(Dev_Meta.idxStartModelInfo, ws.nrows):
+        col_region      = self.settings.col_region
+        col_model_name  = self.settings.col_model_name
+        col_dev_pl      = self.settings.col_dev_pl
+        col_hw_pl       = self.settings.col_hw_pl
+        col_grade       = self.settings.col_grade
+        col_mainsoc     = self.settings.col_mainsoc
+        col_chassis     = self.settings.col_chassis
+        col_dv_start    = self.settings.col_dv_start
+        col_dv_end      = self.settings.col_dv_end
+
+        for row in range(self.settings.row_header+1, ws.nrows):
             model_data = ws.row_values(row)
 
-            # check whether drop model
-            cell = ws.cell(row, Dev_Meta.idxComment)
-
-            if self.isValidLowendModel(model_data, isCheckedLowend):
+            if self.isValidModelToDisplay(model_data, isCheckedLowend):
                 total_row+=1
                 model_data.append(str(row+1))
 
                 ## format excel data
-                model_data[Dev_Meta.idxRegion] = self.getFilteredRegionText(model_data[Dev_Meta.idxRegion])
-                model_data[Dev_Meta.idxModelName] = self.getFilteredText(model_data[Dev_Meta.idxModelName])
-                self.prev_model_names[Dev_Meta.idxModelName] = self.getPrevModelNames(model_data[Dev_Meta.idxModelName])
-                model_data[Dev_Meta.idxDvStart] = self.getFilteredDateText(model_data[Dev_Meta.idxDvStart])
-                model_data[Dev_Meta.idxDvEnd] = self.getFilteredDateText(model_data[Dev_Meta.idxDvEnd])
+                model_data[col_region] = self.getFilteredRegionText(model_data[col_region])
+                model_data[col_model_name] = self.getFilteredText(model_data[col_model_name])
+                self.prev_model_names[col_model_name] = self.getPrevModelNames(model_data[col_model_name])
+                model_data[col_mainsoc] = self.getFilteredText(model_data[col_mainsoc])
+                model_data[col_dv_start] = self.getFilteredDateText(model_data[col_dv_start])
+                model_data[col_dv_end] = self.getFilteredDateText(model_data[col_dv_end])
+
                 # 기획 담당자 설정
-                model_data[Dev_Meta.idxHwPL+1] = self.getPlanOwnerName(model_data[Dev_Meta.idxRegion])
+                model_data[col_hw_pl+1] = self.getPlanOwnerName(model_data[col_region])
                 self.table_data.append(model_data)
 
 
-        # remove duplicated rows
-        idxModelName = Dev_Meta.idxModelName
-        idxDvEndDate = Dev_Meta.idxDvEnd
 
         # sort by DV end date
         self.table_data = sorted(self.table_data
                                  , key=self.cmp_to_key(self.compareForSort
-                                                       , idxDvEndDate))
+                                                       , col_dv_end))
 
 
         # delete same models except for one (earlist dv end date)
@@ -312,12 +325,12 @@ class Dev_Master:
             if row>=len(self.table_data)-1:
                 break;
             row_data = self.table_data[row]
-            dv_end1 = row_data[idxDvEndDate]
+            dv_end1 = row_data[col_dv_end]
             for compare_row in range(len(self.table_data)-1, row, -1):
                 compare_data = self.table_data[compare_row]
-                dv_end2 = compare_data[idxDvEndDate]
+                dv_end2 = compare_data[col_dv_end]
                 compare_result = self.compareDateString(dv_end1, dv_end2)
-                if row_data[idxModelName]==compare_data[idxModelName]:
+                if row_data[col_model_name]==compare_data[col_model_name]:
                     # print("compare "+dv_end1+", "+dv_end2)
                     if compare_result==None:
                         print("compare result is invalid")
