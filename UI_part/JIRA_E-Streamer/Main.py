@@ -1,32 +1,44 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-from PyQt5 import uic, QtWidgets
-import sys
+from PyQt5 import uic, QtWidgets, QtCore
+from PyQt5.QtCore import QThread, pyqtSignal
+
+import sys, time
 from  JIRA_Handle import *
 from Dev_Master import *
+from Settings import *
 
-main_ui = uic.loadUiType(GetPath()+'Estreamer_JIRA_Main.ui')[0]
+import threading
+from  Progress import *
+from ThreadUtil import *
 
-# 상수, GUI의 component, Function Method : 헝가리안
+# 상수, GUI의 component, Function/Method : 헝가리안 (AbcDefgHijkl...)
 # class 명, 변수 : 'aa_bb_cc_...'
+
+main_ui = uic.loadUiType('Estreamer_JIRA_Main.ui')[0]
 
 class Main(QtWidgets.QMainWindow, main_ui):
 
     ## Define UI constants
     # 1. 개발 Master Table
-    table_header_master = ["개발Master\n행번호", "지역", "모델명"
+    table_master_config = ['idx_worksheet', '행_헤더', '열_변경내용'
+                           , '열_Region', '열_모델명', "열_개발PL", "열_회로"
+                           , "열_Grade", "열_MainSoC", "열_Chassis", "열_DV조립"
+                           , "열_DV완료"]
+    table_header_master = ["엑셀 행번호", "지역", "모델명","Main SoC\n(Platform)"
                            , "개발PL", "HW PL", "기획", "DV시작"
                            , "DV종료", "JIRA",  "변경점"]
     idxDevMasterRow_TBL_MASTER  = 0
     idxRegion_TBL_MASTER        = 1
     idxModelName_TBL_MASTER     = 2
-    idxDevPL_TBL_MASTER         = 3
-    idxHwPL_TBL_MASTER          = 4
-    idxPlan_TBL_MASTER          = 5
-    idxDvStart_TBL_MASTER       = 6
-    idxDvEnd_TBL_MASTER         = 7
-    idxJiraIssueNo_TBL_MASTER   = 8
-    idxDiff_TBL_MASTER          = 9
+    idxMainSoC_TBL_MASTER       = 3
+    idxDevPL_TBL_MASTER         = 4
+    idxHwPL_TBL_MASTER          = 5
+    idxPlan_TBL_MASTER          = 6
+    idxDvStart_TBL_MASTER       = 7
+    idxDvEnd_TBL_MASTER         = 8
+    idxJiraIssueNo_TBL_MASTER   = 9
+    idxDiff_TBL_MASTER          = 10
 
     # 2. JIRA Table
     table_header_jira = ["모델명","모델JIRA","Spec.확인JIRA"
@@ -51,6 +63,10 @@ class Main(QtWidgets.QMainWindow, main_ui):
 
         # UI default init.
         ## set number of table column
+        self.tblConfigMaster.setColumnCount(len(Main.table_master_config))
+        self.tblConfigMaster.setHorizontalHeaderLabels(Main.table_master_config)
+        self.tblConfigMaster.resizeColumnsToContents()
+
         self.tblMaster.setColumnCount(len(Main.table_header_master))
         self.tblMaster.setHorizontalHeaderLabels(Main.table_header_master)
         self.tblMaster.resizeColumnsToContents()
@@ -60,30 +76,44 @@ class Main(QtWidgets.QMainWindow, main_ui):
         self.tblJira.resizeColumnsToContents()
         self.jira_table_data={}
 
+        self.progressJiraUpdate.setValue(0)
+        self.progressJiraUpdate.setVisible(False)
         self.lblStatus.setText('')
+        self.lblFileName.setText('')
 
         # connect signals & slots
-        self.btnOpenMaster.clicked.connect(self.slotOpenDevMaster)
+        self.btnSettings.clicked.connect(self.openSettings)
+        self.btnSelDevMaster.clicked.connect(self.slotSelectDevMaster)
+        self.btnRefresh.clicked.connect(self.slotRefreshDevMaster)
+        self.btnLoadModelInfo.clicked.connect(self.slotLoadModelInfo)
         self.btnLogin.clicked.connect(self.slotLogin)
         self.btnLogout.clicked.connect(self.slotLogout)
         #self.btnCreateIssue.clicked.connect(self.slotCreateIssues)
-        self.chkLowend.toggled.connect(self.slotToggleChkLowend)
+        #self.chkLowend.toggled.connect(self.slotToggleChkLowend)
         self.btnInqIssue.clicked.connect(self.slotInquiryIssues)
         self.btnChkDiff.clicked.connect(self.slotChkDiff)
         self.btnUpdate.clicked.connect(self.slotCreateAndUpdateAllIssues)
 
-
         #init member
-        self.jira_handler = JIRA_Handler('dev') # Dev. Tracker
         self.jira_tracker = None
         self.login_user = None
         self.jira_diff_conents = None
+        self.abortedJiraWork = False
+
+        self.jira_handler = JIRA_Handler()
+
+        # try session login
+        self.jira_handler.sessionLogin(self, True)
+
+        # load settings
+        self.settings = Settings(self.jira_handler, self)
+        self.jira_handler.setSettings(self.settings)
+
+        self.tblConfigMaster.setRowCount(1)
+        self.setMetaSettingsToConfigTbl()
 
         # 개발 Master
-        self.dev_master = Dev_Master()
-
-        # trye session login
-        self.jira_handler.sessionLogin(self)
+        self.dev_master = Dev_Master(self.settings)
 
         self.slotInquiryIssues()
         #self.dev_master.setDevMasterExcel("C:/Users/heuser/Desktop/★V2.5_17년 Global Development Master_170111(2).xlsx")
@@ -91,6 +121,14 @@ class Main(QtWidgets.QMainWindow, main_ui):
         #self.dev_master.setDevMasterExcel("C:/Users/heuser/Desktop/★V2.3_17년 Global Development Master_161209.xlsx")
         #self.dev_master.setDevMasterExcel("C:/Users/heuser/Desktop/★V2.4_17년 Global Development Master_161227.xlsx")
         #self.updateTblMaster()
+
+    def openSettings(self):
+        self.settings.show()
+
+    def updateSettings(self, settings):
+        self.settings = settings
+        self.jira_handler.setSettings(settings)
+        print("updated setting. labels : "+str(self.settings.labels))
 
     def setNeedLoginState(self, isNeedLogin):
         self.chkSession.setVisible(isNeedLogin)
@@ -107,7 +145,8 @@ class Main(QtWidgets.QMainWindow, main_ui):
             self.txtPwd.setText(self.jira_handler.pwd)
 
     def slotToggleChkLowend(self):
-        if self.dev_master.dev_master_excel!=None and self.dev_master.xls_file_name!=None:
+        if self.dev_master.dev_master_excel!=None   \
+            and self.dev_master.xls_file_name!=None:
             self.updateTblMaster()
 
     def getDevMasterExcelFile(self):
@@ -127,8 +166,12 @@ class Main(QtWidgets.QMainWindow, main_ui):
     def setTableData(self, tbl, row, col, txt):
         tbl.setItem(row, col, QtWidgets.QTableWidgetItem(txt))
 
+    def setTableRowData(self, tbl, row, row_data):
+        for idx_column in range(len(row_data)):
+            self.setTableData(tbl, row, idx_column, row_data[idx_column])
+
     def setDevTableRowData(self, row, row_data):
-        if len(row_data)<Dev_Meta.idxDvEnd+1:
+        if len(row_data)<self.settings.col_dv_end+1:
             print("invalid row_data")
             return
 
@@ -140,35 +183,41 @@ class Main(QtWidgets.QMainWindow, main_ui):
         # column index 1 : Region
         self.setTableData(self.tblMaster
                           , row, Main.idxRegion_TBL_MASTER
-                          , row_data[Dev_Meta.idxRegion])
+                          , row_data[self.settings.col_region])
 
         # column index 2 : Model Name
         self.setTableData(self.tblMaster
                           , row, Main.idxModelName_TBL_MASTER
-                          , row_data[Dev_Meta.idxModelName])
+                          , row_data[self.settings.col_model_name])
 
-        # column index 3 : 개발 PL
+        # column index 3 : Main SoC (Platform)
+        self.setTableData(self.tblMaster
+                          , row, Main.idxMainSoC_TBL_MASTER
+                          , row_data[self.settings.col_mainsoc]
+                            +'('+row_data[self.settings.col_mainsoc+1]+')')
+
+        # column index 4 : 개발 PL
         self.setTableData(self.tblMaster
                           , row, Main.idxDevPL_TBL_MASTER
-                          , row_data[Dev_Meta.idxDevPL])
+                          , row_data[self.settings.col_dev_pl])
 
-        # column index 4 : HW PL
+        # column index 5 : HW PL
         self.setTableData(self.tblMaster
                           , row, Main.idxHwPL_TBL_MASTER
-                          , row_data[Dev_Meta.idxHwPL])
+                          , row_data[self.settings.col_hw_pl])
 
-        # column index 5 : 기획 담당자
+        # column index 6 : 기획 담당자
         self.setTableData(self.tblMaster
                           , row, Main.idxPlan_TBL_MASTER
-                          , row_data[Dev_Meta.idxHwPL+1])
+                          , row_data[self.settings.col_hw_pl+1])
 
-        # column index 6,7 : DV 시작/종료 일자
+        # column index 7,8 : DV 시작/종료 일자
         self.setTableData(self.tblMaster
                           , row, Main.idxDvStart_TBL_MASTER
-                          , row_data[Dev_Meta.idxDvStart])
+                          , row_data[self.settings.col_dv_start])
         self.setTableData(self.tblMaster
                           , row, Main.idxDvEnd_TBL_MASTER
-                          , row_data[Dev_Meta.idxDvEnd])
+                          , row_data[self.settings.col_dv_end])
         return
 
     def updateTblMaster(self):
@@ -197,16 +246,107 @@ class Main(QtWidgets.QMainWindow, main_ui):
         self.tblMaster.resizeRowsToContents();
         # fill table master [End]
 
-        # set Dev. Master Version to Label
-        self.lblVer.setText(self.dev_master.version)
+    def loadMetaDataFromDevMasterXls(self):
+        print("loadMetaDataFromDevMasterXls")
+        self.tblConfigMaster.setRowCount(2)
+
+        workbook = xlrd.open_workbook(self.dev_master.xls_file_name)
+        settings = self.settings
+        xls_meta_data = ['-','-']   # worksheet index와 header row index
+        ws = workbook.sheet_by_index(settings.idx_worksheet)
+        row_data = ws.row_values(settings.row_header)
+        ## comment 열의 column index
+        xls_meta_data.append(row_data[settings.col_history])
+        ## region 열의 column index
+        xls_meta_data.append(row_data[settings.col_region])
+        ## model_name 열의 column index
+        xls_meta_data.append(row_data[settings.col_model_name])
+        ## dev_pl 열의 column index
+        xls_meta_data.append(row_data[settings.col_dev_pl])
+        ## hw_pl 열의 column index
+        xls_meta_data.append(row_data[settings.col_hw_pl])
+        ## grade 열의 column index
+        xls_meta_data.append(row_data[settings.col_grade])
+        ## Main SoC 열의 column index
+        xls_meta_data.append(row_data[settings.col_mainsoc])
+        ## chassis 열의 column index
+        xls_meta_data.append(row_data[settings.col_chassis])
+        ## dv_start 열의 column index
+        xls_meta_data.append(row_data[settings.col_dv_start])
+        ## dv_end 열의 column index
+        xls_meta_data.append(row_data[settings.col_dv_end])
+
+        self.setTableRowData(self.tblConfigMaster, 1, xls_meta_data)
+
+        for col in range(self.tblConfigMaster.columnCount()):
+            item = self.tblConfigMaster.item(1, col)
+            item.setFlags(QtCore.Qt.NoItemFlags)
+        self.tblConfigMaster.resizeColumnsToContents()
+        self.tblConfigMaster.resizeRowsToContents()
 
 
-    def slotOpenDevMaster(self):
+    def setMetaSettingsToConfigTbl(self):
+        # set dev_master xls meta to table (tblConfigMaster)
+        xls_meta_data = []
+        ## 개발 마스터의 work sheet index : 17Y/18Y 기준 두번째 워크시트 (1)
+        xls_meta_data.append(str(self.settings.idx_worksheet))
+        ## 개발 마스터의 header row index
+        xls_meta_data.append(str(self.settings.row_header))
+        ## comment 열의 column index
+        xls_meta_data.append(str(self.settings.col_history))
+        ## region 열의 column index
+        xls_meta_data.append(str(self.settings.col_region))
+        ## model name 열의 column index
+        xls_meta_data.append(str(self.settings.col_model_name))
+        ## 개발 PL열의 column index
+        xls_meta_data.append(str(self.settings.col_dev_pl))
+        ## HW PL 열의 column index
+        xls_meta_data.append(str(self.settings.col_hw_pl))
+        ## 개발 Grade 열의 column index
+        xls_meta_data.append(str(self.settings.col_grade))
+        ## Main SoC 열의 column index
+        xls_meta_data.append(str(self.settings.col_mainsoc))
+        ## Chassis 열의 column index
+        xls_meta_data.append(str(self.settings.col_chassis))
+        ## DV 조립일자 열의 column index
+        xls_meta_data.append(str(self.settings.col_dv_start))
+        ## DV 종료 열의 column index
+        xls_meta_data.append(str(self.settings.col_dv_end))
+
+        # aliasing
+        tblConfig = self.tblConfigMaster
+        self.setTableRowData(tblConfig, 0, xls_meta_data)
+
+    def refreshDevMasterInfo(self, selectXls=True):
         print("open master clicked")
-        if len(self.getDevMasterExcelFile())==0:
-            return
+        if selectXls is True or self.dev_master.xls_file_name is None:
+            if len(self.getDevMasterExcelFile())==0:
+                self.lblFileName.setText('')
+                return
+        else:
+            pass
+
         if self.dev_master.xls_file_name is None:
+            self.lblFileName.setText('')
             return
+
+        # 개발 마스터 xls의 메타 정보 (row/col) 표시
+        self.setMetaSettingsToConfigTbl()
+
+        # set Dev. Master Version to Label
+        self.dev_master.parseMasterVersion()
+        self.lblVer.setText(self.dev_master.version)
+        self.lblFileName.setText(self.dev_master.xls_file_name)
+
+        self.loadMetaDataFromDevMasterXls()
+
+    def slotRefreshDevMaster(self):
+        self.refreshDevMasterInfo(False)
+
+    def slotSelectDevMaster(self):
+        self.refreshDevMasterInfo(True)
+
+    def slotLoadModelInfo(self):
         self.updateTblMaster()
         self.tblMaster.update()
 
@@ -394,8 +534,8 @@ class Main(QtWidgets.QMainWindow, main_ui):
             return
 
         # if there is no issue
-        if self.jira_table_data is None:
-            for row in range(0, tbl_mastser.rowCount()):
+        if self.jira_table_data is None or len(self.jira_table_data)==0:
+            for row in range(0, tbl_master.rowCount()):
                 self.fillNoJIRAtoMasterTbl(row)
                 self.jira_diff_conents = {}
             tbl_master.resizeColumnsToContents();
@@ -485,22 +625,24 @@ class Main(QtWidgets.QMainWindow, main_ui):
         #get all issues of model jira and sub-tasks
         tracker = self.jira_tracker
         jira_handler = self.jira_handler
-        all_jira_models = tracker.search_issues(jira_handler.jql_model
-                                                , maxResults=jira_handler.maxResultJira)
-        all_jira_spec   = tracker.search_issues(jira_handler.jql_spec
-                                                , maxResults=jira_handler.maxResultJira)
-        all_jira_test   = tracker.search_issues(jira_handler.jql_test
-                                                , maxResults=jira_handler.maxResultJira)
+
+        all_jira_models = tracker.search_issues(self.settings.jql_model \
+                                    , maxResults=self.settings.max_result_cnt)
+        all_jira_spec   = tracker.search_issues(self.settings.jql_spec \
+                                    , maxResults=self.settings.max_result_cnt)
+        all_jira_test   = tracker.search_issues(self.settings.jql_test \
+                                    , maxResults=self.settings.max_result_cnt)
         num_all_models = len(all_jira_models)
 
         self.tblJira.clear()
+        self.jira_table_data={}
         self.tblJira.setRowCount(num_all_models)
         self.tblJira.setHorizontalHeaderLabels(Main.table_header_jira)
 
         if num_all_models==0:
             # TBD : clear diff clause on maser
             self.checkDiffAndFillMasterTbl()
-            self.lblStatus.setText("Number Of Inquiried Issue : "
+            self.lblStatus.setText("Number Of Inquiried Models : "
                                    +str(self.tblJira.rowCount()))
             self.lblStatus.update()
             return
@@ -509,7 +651,6 @@ class Main(QtWidgets.QMainWindow, main_ui):
         #           ,"개발Master 버전", "개발Master 행번호"
         #           , "DV종료", "Spec. Name", "Image Ver."]
         # jira_table_data 변수에 모델 별로 데이터를 채워 넣는다
-        self.jira_table_data = {}
         ordered_jira_data = []
         for issue in all_jira_models:
             description = issue.raw['fields']['description']
@@ -651,6 +792,9 @@ class Main(QtWidgets.QMainWindow, main_ui):
         self.checkDiffAndFillMasterTbl()
         pass
 
+    def setAbortedJiraStatus(self):
+        self.abortedJiraWork = True
+
     def slotCreateAndUpdateAllIssues(self):
         # let alias
         dev_table = self.tblMaster
@@ -673,23 +817,44 @@ class Main(QtWidgets.QMainWindow, main_ui):
         created_spec_check_jira = []
         modified_model_jira = {}
 
+        # progress_dialog = Progress(self.setAbortedJiraStatus)
+        # progress_dialog.setMaxProgressValue(dev_table.rowCount())
+        # progress_dialog.exec_()
 
-        for row in range(0, dev_table.rowCount()):
+        progress_thread = ProgressThread()
+        progress_thread.setMaxValue(dev_table.rowCount())
+        progress_thread.connect(self.progressJiraUpdate.setValue)
+        self.progressJiraUpdate.setMaximum(dev_table.rowCount())
+        self.progressJiraUpdate.setValue(0)
+
+        for row in range(dev_table.rowCount()):
             print("row : "+str(row)+" / "+str(dev_table.rowCount()))
-            model_name = dev_table.item(row, Main.idxModelName_TBL_MASTER).text()
+            # progress_dialog.setProgress(row)
+            if self.abortedJiraWork is True:
+                break
+            progress_thread.setCurrent(row)
+
+            # get modlen info from 개발 마스터 Table
+            model_name = dev_table.item(row
+                                        , Main.idxModelName_TBL_MASTER).text()
             issue_no = dev_table.item(row, Main.idxJiraIssueNo_TBL_MASTER).text()
             model_data = dev_master.getModelDataFromModelName(model_name)
+
+            # 모델 Flag 초기화
             is_model_name_changed = False
             is_create_model_jira = False
+
+            # 모델의 Jira issue
             model_issue = None
+
+            # 변경점 text
             diff_text = dev_table.item(row, Main.idxDiff_TBL_MASTER).text()
 
             if diff_text.find('변경점 없음')>=0:
                 continue
 
             if model_data is None:
-                # drop model
-
+                # check drop model
                 if diff_text.find('모델 Drop')>=0:
                     print('drop model : resolve 처리 '+model_name)
                     jira_data = jira_table_data.get(model_name)
@@ -800,6 +965,12 @@ class Main(QtWidgets.QMainWindow, main_ui):
             self.lblStatus.setText(str(num_modified_model_jira)
                                   +" / "+str(len(self.jira_diff_conents.keys()))
                                   + ' modified')
+        self.progressJiraUpdate.setValue(dev_table.rowCount())
+        # else:
+        #     progress_dialog.setProgress(dev_table.rowCount())
+        #     progress_dialog.close()
+
+        self.abortedJiraWork=False
 
         print('modified jira contents')
         print(str(modified_model_jira))
@@ -836,6 +1007,7 @@ class Main(QtWidgets.QMainWindow, main_ui):
     #
     #     self.slotInquiryIssues()
     #     #print("found : "+self.jira_tracker.search_issues('Project=ESTREAMER AND Summary~"'+self.table_data[0][Meta_Info.idxModelNameCol]+'"')[0].key)
+
 
 app = QtWidgets.QApplication(sys.argv)
 
