@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<script>
+function handleVisibilityChange(){
+	var appName = "";
+	var appId, ps = window.PalmSystem;
+	var getAppId = ps.getIdentifier();
+	appId = (getAppId.split(" "))[0];
+	console.log("appId : ", appId);
+	
+	if (!document.webkitHidden){
+		var LUNA = new PalmServiceBridge();
+		var URL = "luna://com.webos.applicationManager/launch";
+		var param0 = {
+			"id": "com.webos.app.cpdownloadcenter",
+			"noSplash": true,
+			"params":
+			{
+				"appName": appName,
+				"appId": appId
+			}
+		}
+		var param = JSON.stringify(param0);
+		LUNA.onservicecallback = null;
+		LUNA.call(URL, param);
+	} else {
+		window.close();
+	}
+}
+function init(){
+	// visibility Event
+	if (!window.PalmSystem) return;
+	document.addEventListener('webkitvisibilitychange', handleVisibilityChange, false);
+}
+</script>
+</head>
+<body onload="init();" style="background:#000000">
+</body>
+</html>					 
