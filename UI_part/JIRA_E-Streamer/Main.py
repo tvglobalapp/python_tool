@@ -7,10 +7,10 @@ import sys, time
 from  JIRA_Handle import *
 from Dev_Master import *
 from Settings import *
-
-import threading
-from  Progress import *
-from ThreadUtil import *
+from PIL import Image
+import webbrowser
+# import threading
+# from ThreadUtil import *
 
 # 상수, GUI의 component, Function/Method : 헝가리안 (AbcDefgHijkl...)
 # class 명, 변수 : 'aa_bb_cc_...'
@@ -41,20 +41,21 @@ class Main(QtWidgets.QMainWindow, main_ui):
     idxDiff_TBL_MASTER          = 10
 
     # 2. JIRA Table
-    table_header_jira = ["모델명","모델JIRA","Spec.확인JIRA"
+    table_header_jira = ["모델명","지역", "모델JIRA","Spec.확인JIRA"
                          , "실물검증JIRA", "개발Master 버전"
                          , "개발Master\n행번호", "DV종료"
                          , "Spec. Name", "Image Ver."]
     idxModelName_TBL_JIRA       = 0
-    idxModelJIRA_TBL_JIRA       = 1
-    idxSpecConfimJIRA_TBL_JIRA  = 2
-    idxTestJIRA_TBL_JIRA        = 3
-    idxDevMasterVer_TBL_JIRA    = 4
-    idxDevMasterRow_TBL_JIRA    = 5
-    idxDvEnd_TBL_JIRA           = 6
-    idxSpecName_TBL_JIRA        = 7
-    idxImageVer_TBL_JIRA        = 8
-    idxTestJiraObject           = 9
+    idxRegion_TBL_JIRA          = 1
+    idxModelJIRA_TBL_JIRA       = 2
+    idxSpecConfimJIRA_TBL_JIRA  = 3
+    idxTestJIRA_TBL_JIRA        = 4
+    idxDevMasterVer_TBL_JIRA    = 5
+    idxDevMasterRow_TBL_JIRA    = 6
+    idxDvEnd_TBL_JIRA           = 7
+    idxSpecName_TBL_JIRA        = 8
+    idxImageVer_TBL_JIRA        = 9
+    idxTestJiraObject           = 10
 
     def __init__(self, parent=None):
         super()
@@ -83,6 +84,7 @@ class Main(QtWidgets.QMainWindow, main_ui):
 
         # connect signals & slots
         self.btnSettings.clicked.connect(self.openSettings)
+        self.tblJira.cellDoubleClicked.connect(self.slotOpenJira)
         self.btnSelDevMaster.clicked.connect(self.slotSelectDevMaster)
         self.btnRefresh.clicked.connect(self.slotRefreshDevMaster)
         self.btnLoadModelInfo.clicked.connect(self.slotLoadModelInfo)
@@ -93,6 +95,8 @@ class Main(QtWidgets.QMainWindow, main_ui):
         self.btnInqIssue.clicked.connect(self.slotInquiryIssues)
         self.btnChkDiff.clicked.connect(self.slotChkDiff)
         self.btnUpdate.clicked.connect(self.slotCreateAndUpdateAllIssues)
+        self.btnUploadImg.clicked.connect(self.slotUploadImage)
+        self.btnConvImg.clicked.connect(self.slotConvImg)
 
         #init member
         self.jira_tracker = None
@@ -122,13 +126,108 @@ class Main(QtWidgets.QMainWindow, main_ui):
         #self.dev_master.setDevMasterExcel("C:/Users/heuser/Desktop/★V2.4_17년 Global Development Master_161227.xlsx")
         #self.updateTblMaster()
 
+    def slotOpenJira(self, row, col):
+        if col<Main.idxModelJIRA_TBL_JIRA or col>Main.idxTestJIRA_TBL_JIRA:
+            return
+
+        print("row : "+str(row)+', col:'+str(col))
+        issue_no = self.tblJira.item(row, col).text()
+        print(issue_no)
+        issue_url = issue_url_prefix+issue_no
+        webbrowser.open_new(issue_url)
+
     def openSettings(self):
+        self.lblStatus.setText('')
         self.settings.show()
 
     def updateSettings(self, settings):
         self.settings = settings
         self.jira_handler.setSettings(settings)
         print("updated setting. labels : "+str(self.settings.labels))
+
+    def slotConvImg(self):
+        self.lblStatus.setText('')
+        fDialog = QtWidgets.QFileDialog(self)
+        fDialog.setFileMode(QtWidgets.QFileDialog.ExistingFiles)
+        guide = "Select E-Streamer image files to convert"
+        filters = "PPM (*.ppm)"
+        imgFiles = fDialog.getOpenFileNames(self, guide, "C://", filters)[0]
+        imgFilesConverted = 0
+        for imgFile in imgFiles:
+            try:
+                img = Image.open(imgFile)
+                dirNamesTokens = imgFile.split('/')
+                if len(dirNamesTokens)<2:
+                    print('spec Name parsing from folder name error.. '+imgFile)
+                    continue
+
+                specName = dirNamesTokens[len(dirNamesTokens)-2]
+                print("specName"+specName)
+                targetName = imgFile.split('_0000.ppm')[0]+'_'+specName+".jpg"
+                print("try to save to "+targetName)
+                img.save(targetName)
+                imgFilesConverted +=1
+            except:
+                print("image open/save error "+imgFile)
+                continue
+        self.lblStatus.setText(str(imgFilesConverted)+" files are created")
+
+    def slotUploadImage(self):
+        tblJira = self.tblJira
+        if len(tblJira.selectedIndexes())==0:
+            self.lblStatus.setText("Select Row(Model) to upload Image.")
+            return
+        imgVer = self.txtImgVer.text()
+        if imgVer=="":
+            self.lblStatus.setText("Need To input Image Version. ex) v1.0")
+            return
+        self.lblStatus.setText('')
+
+        fDialog = QtWidgets.QFileDialog(self)
+        fDialog.setFileMode(QtWidgets.QFileDialog.ExistingFiles)
+        guide = "Select E-Streamer image files to upload"
+        filters = "JPG (*.jpg)"
+        imgFiles = fDialog.getOpenFileNames(self, guide, "C://", filters)[0]
+        print("img files to load\n"+str(imgFiles))
+
+        if len(imgFiles)==0:
+            return
+
+        issueCell = self.tblJira.selectedIndexes()[Main.idxTestJIRA_TBL_JIRA]
+        issueNoTxt = issueCell.data()
+        tracker = self.jira_tracker
+        issue = tracker.issue(issueNoTxt)
+
+        # remove previous images
+        fields = issue.raw['fields']
+        attachments = fields['attachment']
+        for attach_file in attachments:
+            if attach_file['filename'].find('.jpg')>=0 \
+                or attach_file['filename'].find('.ppm')>=0 :
+                resoure_to_delete = tracker.attachment(attach_file['id'])
+                resoure_to_delete.delete()
+
+        # attach image files
+        uploaded=0
+        for imgFileName in imgFiles:
+            imgFile = open(imgFileName, 'rb')
+            attachment_object = tracker.add_attachment(issue, imgFile)
+            uploaded+=1
+
+        # update label : remove previous and add new. ex) 'capture_v1.0'
+        labels = issue.fields.labels
+        for label in labels:
+            if label.find('capture')>=0:
+                labels.remove(label)
+                issue.update(fields={"labels":labels})
+                break
+        issue.add_field_value('labels', 'capture_'+imgVer)
+        self.slotInquiryIssues()
+
+        status ="["+issueNoTxt+"] " \
+                +str(uploaded)+' files uploaded : capture_'+imgVer
+        self.lblStatus.setText(status)
+        # imgFolder = str(QFileDialog.getExistingDirectory(self, "Select Directory"))
 
     def setNeedLoginState(self, isNeedLogin):
         self.chkSession.setVisible(isNeedLogin)
@@ -620,7 +719,6 @@ class Main(QtWidgets.QMainWindow, main_ui):
             return
 
         self.lblStatus.setText("Inquirying JIRA issues ... ")
-        self.lblStatus.update()
 
         #get all issues of model jira and sub-tasks
         tracker = self.jira_tracker
@@ -659,6 +757,15 @@ class Main(QtWidgets.QMainWindow, main_ui):
             row_data = []
             # 모델명
             row_data.append(model_name)
+            # Summary
+            summary = issue.fields.summary
+            try:
+                model_info \
+                    = summary.split(model_name)[0].split('[Estreamer검증]')[1]
+                row_data.append(model_info)
+            except:
+                row_data.append(summary)
+
             # 모델JIRA
             row_data.append(issue.key)
 
@@ -759,7 +866,7 @@ class Main(QtWidgets.QMainWindow, main_ui):
                 continue
 
             # 하나의 row에 대해 column 단위로 반복 loop하여 UI에 값을 set한다
-            for idx_table_jira in range(self.idxModelJIRA_TBL_JIRA
+            for idx_table_jira in range(self.idxModelName_TBL_JIRA+1
                                         , self.idxImageVer_TBL_JIRA+1):
                 if idx_table_jira in (self.idxTestJIRA_TBL_JIRA
                                       , self.idxSpecConfimJIRA_TBL_JIRA):

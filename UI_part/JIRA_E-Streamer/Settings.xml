@@ -1,13 +1,13 @@
 <settings>
   <jira_setting>
-    <project_id>SSP</project_id>
+    <project_id>ESTREAMER</project_id>
   <max_result_cnt>250</max_result_cnt>
   <label>18Y</label>
   <label>&#49892;&#47932;&#44160;&#51613;</label>
   <watcher>ybin.cho</watcher>
-  <jql_model_issue>project=SSP and labels=18Y and labels=&#49892;&#47932;&#44160;&#51613; and labels=model</jql_model_issue>
-  <jql_spec_issue>project=SSP and labels=18Y and labels=&#49892;&#47932;&#44160;&#51613; and labels=spec</jql_spec_issue>
-  <jql_test_issue>project=SSP and labels=18Y and labels=&#49892;&#47932;&#44160;&#51613; and labels=test</jql_test_issue>
+  <jql_model_issue>project=ESTREAMER and labels=18Y and labels=&#49892;&#47932;&#44160;&#51613; and labels=model</jql_model_issue>
+  <jql_spec_issue>project=ESTREAMER and labels=18Y and labels=&#49892;&#47932;&#44160;&#51613; and labels=spec</jql_spec_issue>
+  <jql_test_issue>project=ESTREAMER and labels=18Y and labels=&#49892;&#47932;&#44160;&#51613; and labels=test</jql_test_issue>
   <spec_desc>&#48376; &#47784;&#45944;&#50640; &#45824;&#54644; E-Streamer &#51201;&#50857;&#46104;&#50612;&#50556; &#54624; Spec. &#47784;&#45944;&#47749; &#54869;&#51064; &#50836;&#52397; &#46300;&#47549;&#45768;&#45796;.
 Spec. &#47784;&#45944;&#47749;&#51060;&#46976; E-Streamer Spec. Sheet &#49345;&#50640; &#51648;&#50669; &#53485;&#50640; &#51221;&#51032;&#46108; 'Model Name' &#54637;&#47785;&#51012; &#51032;&#48120;&#54633;&#45768;&#45796;.
 &#47784;&#45944;&#50640; &#45824;&#54620; &#51221;&#48372;&#45716; &#48376; &#51060;&#49800;&#51032; &#49345;&#50948; &#51060;&#49800;&#47484; &#52280;&#51312;&#54616;&#49464;&#50836;.
@@ -41,7 +41,7 @@ Comment &#54869;&#51064;&#54616;&#49884;&#50612; &#51648;&#50669;(Area) &#45236;
   <col_dv_end>36</col_dv_end>
   </dev_master_setting>
 <owners>
-    <estreamer_sw>ybin.cho</estreamer_sw>
+    <estreamer_sw>gayoung.lee</estreamer_sw>
   <plan_dept>TV&#44060;&#48156;&#44592;&#54925;</plan_dept>
   <plan_KR>bbomi.kim</plan_KR>
   <plan_US>heungmin.park</plan_US>

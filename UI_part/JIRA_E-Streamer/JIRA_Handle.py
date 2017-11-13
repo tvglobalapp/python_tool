@@ -13,6 +13,8 @@ event = 'dev'     ## dev / release
 # HLM Dev. Tracker
 hlm_dev_url = "http://hlm.lge.com/issue"
 
+issue_url_prefix = hlm_dev_url+"/browse/"
+
 # Jira Login을 위한 session file name
 session_file_name = 'jira_session.xml'
 

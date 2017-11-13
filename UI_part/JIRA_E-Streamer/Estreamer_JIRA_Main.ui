@@ -137,7 +137,7 @@
     <property name="geometry">
      <rect>
       <x>600</x>
-      <y>415</y>
+      <y>400</y>
       <width>371</width>
       <height>31</height>
      </rect>
@@ -208,7 +208,7 @@
       <x>22</x>
       <y>118</y>
       <width>951</width>
-      <height>291</height>
+      <height>271</height>
      </rect>
     </property>
     <property name="font">
@@ -220,6 +220,9 @@
     </property>
     <property name="autoScroll">
      <bool>true</bool>
+    </property>
+    <property name="editTriggers">
+     <set>QAbstractItemView::NoEditTriggers</set>
     </property>
     <property name="selectionMode">
      <enum>QAbstractItemView::SingleSelection</enum>
@@ -654,11 +657,11 @@
      <string/>
     </property>
    </widget>
-   <widget class="QPushButton" name="btnSettings_2">
+   <widget class="QPushButton" name="btnUploadImg">
     <property name="geometry">
      <rect>
-      <x>20</x>
-      <y>420</y>
+      <x>394</x>
+      <y>402</y>
       <width>121</width>
       <height>35</height>
      </rect>
@@ -667,12 +670,92 @@
      <font>
       <family>Arial</family>
       <pointsize>10</pointsize>
-      <weight>75</weight>
-      <bold>true</bold>
+      <weight>50</weight>
+      <bold>false</bold>
      </font>
     </property>
     <property name="text">
      <string>이미지 첨부</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="txtImgVer">
+    <property name="geometry">
+     <rect>
+      <x>264</x>
+      <y>404</y>
+      <width>121</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>14</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="lblVer_4">
+    <property name="geometry">
+     <rect>
+      <x>174</x>
+      <y>409</y>
+      <width>91</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>13</pointsize>
+      <weight>50</weight>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>Image Ver :</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="Line" name="line">
+    <property name="geometry">
+     <rect>
+      <x>154</x>
+      <y>400</y>
+      <width>3</width>
+      <height>40</height>
+     </rect>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Vertical</enum>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="btnConvImg">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>400</y>
+      <width>121</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>50</weight>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>이미지 변환
+.ppm-&gt;.jpg</string>
     </property>
    </widget>
   </widget>
