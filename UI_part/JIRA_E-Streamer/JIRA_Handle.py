@@ -150,7 +150,7 @@ class JIRA_Handler:
         try:
             tree = ET.parse(self.session_file)
         except FileNotFoundError:
-            print(session_file)
+            print(session_file_name)
             if need_update_to_ui is True:
                 main_ui.setNeedLoginState(True)
             return
