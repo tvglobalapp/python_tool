@@ -928,18 +928,18 @@ class Main(QtWidgets.QMainWindow, main_ui):
         # progress_dialog.setMaxProgressValue(dev_table.rowCount())
         # progress_dialog.exec_()
 
-        progress_thread = ProgressThread()
-        progress_thread.setMaxValue(dev_table.rowCount())
-        progress_thread.connect(self.progressJiraUpdate.setValue)
-        self.progressJiraUpdate.setMaximum(dev_table.rowCount())
-        self.progressJiraUpdate.setValue(0)
+        # progress_thread = ProgressThread()
+        # progress_thread.setMaxValue(dev_table.rowCount())
+        # progress_thread.connect(self.progressJiraUpdate.setValue)
+        # self.progressJiraUpdate.setMaximum(dev_table.rowCount())
+        # self.progressJiraUpdate.setValue(0)
 
         for row in range(dev_table.rowCount()):
             print("row : "+str(row)+" / "+str(dev_table.rowCount()))
             # progress_dialog.setProgress(row)
             if self.abortedJiraWork is True:
                 break
-            progress_thread.setCurrent(row)
+            # progress_thread.setCurrent(row)
 
             # get modlen info from 개발 마스터 Table
             model_name = dev_table.item(row
@@ -1072,7 +1072,7 @@ class Main(QtWidgets.QMainWindow, main_ui):
             self.lblStatus.setText(str(num_modified_model_jira)
                                   +" / "+str(len(self.jira_diff_conents.keys()))
                                   + ' modified')
-        self.progressJiraUpdate.setValue(dev_table.rowCount())
+        # self.progressJiraUpdate.setValue(dev_table.rowCount())
         # else:
         #     progress_dialog.setProgress(dev_table.rowCount())
         #     progress_dialog.close()
