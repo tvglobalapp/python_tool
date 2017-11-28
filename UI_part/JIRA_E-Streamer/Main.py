@@ -3,7 +3,7 @@
 from PyQt5 import uic, QtWidgets, QtCore
 from PyQt5.QtCore import QThread, pyqtSignal
 
-import sys, time
+import sys, time, os
 from  JIRA_Handle import *
 from Dev_Master import *
 from Settings import *
@@ -147,32 +147,66 @@ class Main(QtWidgets.QMainWindow, main_ui):
         self.jira_handler.setSettings(settings)
         print("updated setting. labels : "+str(self.settings.labels))
 
+    def convertImgagesAll(self, path):
+        cnt_converted = 0
+        for (root, dirs, files) in os.walk(path):
+            rootpath = os.path.join(os.path.abspath(path), root)
+
+            for file_name in files:
+                abs_file_name = os.path.join(rootpath, file_name)
+                ext = os.path.splitext(file_name)[-1] # ext: 확장자
+                if ext=='.pgm':
+                    os.remove(abs_file_name)
+                elif ext=='.ppm':
+                    imgFile = abs_file_name
+                    try:
+                        img = Image.open(imgFile)
+                        dirNamesTokens = imgFile.split('\\')
+                        if len(dirNamesTokens)<2:
+                            print('spec Name parsing from folder name error.. '+imgFile)
+                            continue
+                        specName = dirNamesTokens[-2]
+                        print("specName"+specName)
+                        targetName = imgFile.split('000')[0]+specName+".jpg"
+                        print("try to save to "+targetName)
+                        img.save(targetName)
+                        cnt_converted +=1
+                        os.remove(abs_file_name)
+                    except:
+                        print("image open/save error "+imgFile)
+                        pass
+        return cnt_converted
+
     def slotConvImg(self):
         self.lblStatus.setText('')
         fDialog = QtWidgets.QFileDialog(self)
         fDialog.setFileMode(QtWidgets.QFileDialog.ExistingFiles)
-        guide = "Select E-Streamer image files to convert"
-        filters = "PPM (*.ppm)"
-        imgFiles = fDialog.getOpenFileNames(self, guide, "C://", filters)[0]
-        imgFilesConverted = 0
-        for imgFile in imgFiles:
-            try:
-                img = Image.open(imgFile)
-                dirNamesTokens = imgFile.split('/')
-                if len(dirNamesTokens)<2:
-                    print('spec Name parsing from folder name error.. '+imgFile)
-                    continue
-
-                specName = dirNamesTokens[len(dirNamesTokens)-2]
-                print("specName"+specName)
-                targetName = imgFile.split('000')[0]+specName+".jpg"
-                print("try to save to "+targetName)
-                img.save(targetName)
-                imgFilesConverted +=1
-            except:
-                print("image open/save error "+imgFile)
-                continue
-        self.lblStatus.setText(str(imgFilesConverted)+" files are created")
+        guide = "Select directory that contains E-Streamer image files to convert"
+        img_path = fDialog.getExistingDirectory(None, guide)
+        img_converted_cnt = 0
+        img_converted_cnt = self.convertImgagesAll(img_path)
+        # filters = "PPM (*.ppm)"
+        # imgFiles = fDialog.getOpenFileNames(self, guide, "C://", filters)[0]
+        # imgFilesConverted = 0
+        # for imgFile in imgFiles:
+        #     print("imge file : "+imgFile)
+        #     try:
+        #         img = Image.open(imgFile)
+        #         dirNamesTokens = imgFile.split('/')
+        #         if len(dirNamesTokens)<2:
+        #             print('spec Name parsing from folder name error.. '+imgFile)
+        #             continue
+        #
+        #         specName = dirNamesTokens[len(dirNamesTokens)-2]
+        #         print("specName"+specName)
+        #         targetName = imgFile.split('000')[0]+specName+".jpg"
+        #         print("try to save to "+targetName)
+        #         img.save(targetName)
+        #         imgFilesConverted +=1
+        #     except:
+        #         print("image open/save error "+imgFile)
+        #         continue
+        self.lblStatus.setText(str(img_converted_cnt)+" files are created")
 
     def slotUploadImage(self):
         tblJira = self.tblJira
