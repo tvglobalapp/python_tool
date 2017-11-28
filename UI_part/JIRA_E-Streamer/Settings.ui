@@ -1121,7 +1121,7 @@
      <x>100</x>
      <y>317</y>
      <width>721</width>
-     <height>111</height>
+     <height>150</height>
     </rect>
    </property>
    <layout class="QGridLayout" name="gridLayout_3">
@@ -1885,9 +1885,9 @@
      </widget>
     </item>
     <item row="2" column="3">
-     <widget class="QLineEdit" name="txtColChassis">
+     <widget class="QLineEdit" name="txtColPanelType">
       <property name="enabled">
-       <bool>false</bool>
+       <bool>true</bool>
       </property>
       <property name="font">
        <font>
@@ -1895,7 +1895,7 @@
         <pointsize>12</pointsize>
         <weight>50</weight>
         <bold>false</bold>
-        <strikeout>true</strikeout>
+        <strikeout>false</strikeout>
         <kerning>false</kerning>
        </font>
       </property>
@@ -1921,12 +1921,12 @@
         <pointsize>10</pointsize>
         <weight>50</weight>
         <bold>false</bold>
-        <strikeout>true</strikeout>
+        <strikeout>false</strikeout>
         <kerning>false</kerning>
        </font>
       </property>
       <property name="text">
-       <string>열_Chassis</string>
+       <string>열_UHD/FHD</string>
       </property>
       <property name="indent">
        <number>5</number>

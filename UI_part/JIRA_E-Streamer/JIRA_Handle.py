@@ -224,6 +224,7 @@ class JIRA_Handler:
         개발 Master Ver. : {ver}\n
         엑셀 행 번호: {row}\n
         Model Name : {model}\n
+        UHD/FHD/HD : {panel_type}\n
         Main SoC : {main_soc}\n
         DV 시작 : {dv_start}\n
         DV 종료 : {dv_end}\n
@@ -234,6 +235,7 @@ class JIRA_Handler:
         '''.format(ver=dev_version, row=model_data[len(model_data)-1]
                     , model=model_data[self.settings.col_model_name]
                     , hwpl= model_data[self.settings.col_hw_pl]
+                    , panel_type = model_data[self.settings.col_panel_type].upper()
                     , plan=model_data[self.settings.col_hw_pl+1]
                     , main_soc=model_data[self.settings.col_mainsoc]
                     , dv_start=model_data[self.settings.col_dv_start]
@@ -334,6 +336,7 @@ class JIRA_Handler:
 
             ## 2) create spec.확인 issue
             spec_fields = self.getFieldsForSpecCheckIssue(model, model_issue)
+            spec_fields['labels'].append(model[self.settings.col_panel_type].lower())
             self.jira.create_issue(fields=spec_fields)
 
             ## 3) create 실물확인 issue

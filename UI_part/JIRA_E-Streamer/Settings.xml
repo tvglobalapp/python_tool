@@ -38,7 +38,7 @@ Comment &#54869;&#51064;&#54616;&#49884;&#50612; &#51648;&#50669;(Area) &#45236;
   <col_hw_pl>10</col_hw_pl>
   <col_grade>13</col_grade>
   <col_mainsoc>14</col_mainsoc>
-  <col_chassis>15</col_chassis>
+  <col_panel_type>23</col_panel_type>
   <col_dv_start>33</col_dv_start>
   <col_dv_end>36</col_dv_end>
   </dev_master_setting>

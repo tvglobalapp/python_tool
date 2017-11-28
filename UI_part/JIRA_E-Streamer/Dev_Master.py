@@ -136,7 +136,6 @@ class Dev_Master:
         if len(rowdata)<14:
             return False
 
-        chassis=rowdata[self.settings.col_chassis]
         grade = rowdata[self.settings.col_grade]
 
         if type(grade)!=str:
@@ -168,8 +167,7 @@ class Dev_Master:
         if is_valid:
             if rowdata[self.settings.col_model_name]=='':
                 is_valid = False
-        if is_valid:
-            if chassis=='' or chassis=='TBD' or grade.endswith('D_VA')==False:
+        if is_valid and grade.endswith('D_VA')==False:
                 is_valid = False
         return is_valid
 
@@ -289,7 +287,7 @@ class Dev_Master:
         col_hw_pl       = self.settings.col_hw_pl
         col_grade       = self.settings.col_grade
         col_mainsoc     = self.settings.col_mainsoc
-        col_chassis     = self.settings.col_chassis
+        col_panel_type  = self.settings.col_panel_type
         col_dv_start    = self.settings.col_dv_start
         col_dv_end      = self.settings.col_dv_end
 
@@ -305,6 +303,7 @@ class Dev_Master:
                 model_data[col_model_name] = self.getFilteredText(model_data[col_model_name])
                 self.prev_model_names[col_model_name] = self.getPrevModelNames(model_data[col_model_name])
                 model_data[col_mainsoc] = self.getFilteredText(model_data[col_mainsoc])
+                model_data[col_panel_type] = model_data[col_panel_type].strip().lower()
                 model_data[col_dv_start] = self.getFilteredDateText(model_data[col_dv_start])
                 model_data[col_dv_end] = self.getFilteredDateText(model_data[col_dv_end])
 

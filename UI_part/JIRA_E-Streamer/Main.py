@@ -23,39 +23,41 @@ class Main(QtWidgets.QMainWindow, main_ui):
     # 1. 개발 Master Table
     table_master_config = ['idx_worksheet', '행_헤더', '열_변경내용'
                            , '열_Region', '열_모델명', "열_개발PL", "열_회로"
-                           , "열_Grade", "열_MainSoC", "열_Chassis", "열_DV조립"
+                           , "열_Grade", "열_MainSoC", "열_UHD/FHD", "열_DV조립"
                            , "열_DV완료"]
-    table_header_master = ["엑셀 행번호", "지역", "모델명","Main SoC\n(Platform)"
+    table_header_master = ["엑셀 행번호", "지역", "모델명","Panel구분", "Main SoC\n(Platform)"
                            , "개발PL", "HW PL", "기획", "DV시작"
                            , "DV종료", "JIRA",  "변경점"]
     idxDevMasterRow_TBL_MASTER  = 0
     idxRegion_TBL_MASTER        = 1
     idxModelName_TBL_MASTER     = 2
-    idxMainSoC_TBL_MASTER       = 3
-    idxDevPL_TBL_MASTER         = 4
-    idxHwPL_TBL_MASTER          = 5
-    idxPlan_TBL_MASTER          = 6
-    idxDvStart_TBL_MASTER       = 7
-    idxDvEnd_TBL_MASTER         = 8
-    idxJiraIssueNo_TBL_MASTER   = 9
-    idxDiff_TBL_MASTER          = 10
+    idxPanelType_TBL_MASTER     = 3
+    idxMainSoC_TBL_MASTER       = 4
+    idxDevPL_TBL_MASTER         = 5
+    idxHwPL_TBL_MASTER          = 6
+    idxPlan_TBL_MASTER          = 7
+    idxDvStart_TBL_MASTER       = 8
+    idxDvEnd_TBL_MASTER         = 9
+    idxJiraIssueNo_TBL_MASTER   = 10
+    idxDiff_TBL_MASTER          = 11
 
     # 2. JIRA Table
-    table_header_jira = ["모델명","지역", "모델JIRA","Spec.확인JIRA"
+    table_header_jira = ["모델명","지역", "Panel구분", "모델JIRA","Spec.확인JIRA"
                          , "실물검증JIRA", "개발Master 버전"
                          , "개발Master\n행번호", "DV종료"
                          , "Spec. Name", "Image Ver."]
     idxModelName_TBL_JIRA       = 0
     idxRegion_TBL_JIRA          = 1
-    idxModelJIRA_TBL_JIRA       = 2
-    idxSpecConfimJIRA_TBL_JIRA  = 3
-    idxTestJIRA_TBL_JIRA        = 4
-    idxDevMasterVer_TBL_JIRA    = 5
-    idxDevMasterRow_TBL_JIRA    = 6
-    idxDvEnd_TBL_JIRA           = 7
-    idxSpecName_TBL_JIRA        = 8
-    idxImageVer_TBL_JIRA        = 9
-    idxTestJiraObject           = 10
+    idxPanelType_TBL_JIRA       = 2
+    idxModelJIRA_TBL_JIRA       = 3
+    idxSpecConfimJIRA_TBL_JIRA  = 4
+    idxTestJIRA_TBL_JIRA        = 5
+    idxDevMasterVer_TBL_JIRA    = 6
+    idxDevMasterRow_TBL_JIRA    = 7
+    idxDvEnd_TBL_JIRA           = 8
+    idxSpecName_TBL_JIRA        = 9
+    idxImageVer_TBL_JIRA        = 10
+    idxTestJiraObject           = 11
 
     def __init__(self, parent=None):
         super()
@@ -163,7 +165,7 @@ class Main(QtWidgets.QMainWindow, main_ui):
 
                 specName = dirNamesTokens[len(dirNamesTokens)-2]
                 print("specName"+specName)
-                targetName = imgFile.split('_0000.ppm')[0]+'_'+specName+".jpg"
+                targetName = imgFile.split('000')[0]+specName+".jpg"
                 print("try to save to "+targetName)
                 img.save(targetName)
                 imgFilesConverted +=1
@@ -289,28 +291,33 @@ class Main(QtWidgets.QMainWindow, main_ui):
                           , row, Main.idxModelName_TBL_MASTER
                           , row_data[self.settings.col_model_name])
 
-        # column index 3 : Main SoC (Platform)
+        # column index 3 : UHD/FHD
+        self.setTableData(self.tblMaster
+                          , row, Main.idxPanelType_TBL_MASTER
+                          , row_data[self.settings.col_panel_type].upper())
+
+        # column index 4 : Main SoC (Platform)
         self.setTableData(self.tblMaster
                           , row, Main.idxMainSoC_TBL_MASTER
                           , row_data[self.settings.col_mainsoc]
                             +'('+row_data[self.settings.col_mainsoc+1]+')')
 
-        # column index 4 : 개발 PL
+        # column index 5 : 개발 PL
         self.setTableData(self.tblMaster
                           , row, Main.idxDevPL_TBL_MASTER
                           , row_data[self.settings.col_dev_pl])
 
-        # column index 5 : HW PL
+        # column index 6 : HW PL
         self.setTableData(self.tblMaster
                           , row, Main.idxHwPL_TBL_MASTER
                           , row_data[self.settings.col_hw_pl])
 
-        # column index 6 : 기획 담당자
+        # column index 7 : 기획 담당자
         self.setTableData(self.tblMaster
                           , row, Main.idxPlan_TBL_MASTER
                           , row_data[self.settings.col_hw_pl+1])
 
-        # column index 7,8 : DV 시작/종료 일자
+        # column index 8,9 : DV 시작/종료 일자
         self.setTableData(self.tblMaster
                           , row, Main.idxDvStart_TBL_MASTER
                           , row_data[self.settings.col_dv_start])
@@ -368,8 +375,8 @@ class Main(QtWidgets.QMainWindow, main_ui):
         xls_meta_data.append(row_data[settings.col_grade])
         ## Main SoC 열의 column index
         xls_meta_data.append(row_data[settings.col_mainsoc])
-        ## chassis 열의 column index
-        xls_meta_data.append(row_data[settings.col_chassis])
+        ## UHD/FHD 열의 column index
+        xls_meta_data.append(row_data[settings.col_panel_type])
         ## dv_start 열의 column index
         xls_meta_data.append(row_data[settings.col_dv_start])
         ## dv_end 열의 column index
@@ -405,8 +412,8 @@ class Main(QtWidgets.QMainWindow, main_ui):
         xls_meta_data.append(str(self.settings.col_grade))
         ## Main SoC 열의 column index
         xls_meta_data.append(str(self.settings.col_mainsoc))
-        ## Chassis 열의 column index
-        xls_meta_data.append(str(self.settings.col_chassis))
+        ## Panel Type 열의 column index
+        xls_meta_data.append(str(self.settings.col_panel_type))
         ## DV 조립일자 열의 column index
         xls_meta_data.append(str(self.settings.col_dv_start))
         ## DV 종료 열의 column index
@@ -499,6 +506,7 @@ class Main(QtWidgets.QMainWindow, main_ui):
                 del(lines[row])
 
         return_value={'version':'', 'xls_row':'', 'model_name':'', 'dv_end':''}
+        return_value['panel_type'] = ''
         for line in lines:
             tokens = line.strip().split(":")
             if len(tokens)!=2:
@@ -509,6 +517,8 @@ class Main(QtWidgets.QMainWindow, main_ui):
                 return_value['xls_row'] = tokens[1].strip()
             elif tokens[0].strip().endswith('Model Name'):
                 return_value['model_name'] = tokens[1].strip()
+            elif tokens[0].strip().endswith('UHD/FHD/HD'):
+                return_value['panel_type'] = tokens[1].strip()
             elif tokens[0].strip().endswith('DV 종료'):
                 dv_end = tokens[1].strip()
                 dev_master = self.dev_master
@@ -579,6 +589,16 @@ class Main(QtWidgets.QMainWindow, main_ui):
                           +previous_model_name
                           +'→'
                           +model_name+'\n')
+
+
+        idxPanelType = self.idxPanelType_TBL_MASTER
+        panel_type = tbl_master.item(row, idxPanelType).text()
+        if panel_type!=model_jira[self.idxPanelType_TBL_JIRA]:
+            diff_fields['panel_type'] = panel_type
+            diff_text += ('Panel구분 변경 : '
+                            +model_jira[self.idxPanelType_TBL_JIRA]
+                            +'→'
+                            +panel_type+'\n')
 
         idxJira = self.idxJiraIssueNo_TBL_MASTER
         ## fill Jira Issue No.
@@ -754,11 +774,14 @@ class Main(QtWidgets.QMainWindow, main_ui):
             description = issue.raw['fields']['description']
             issue_parsed = self.parseDescriptionField(description)
             model_name = issue_parsed['model_name']
+            panel_type = issue_parsed['panel_type'].upper()
             row_data = []
             # 모델명
             row_data.append(model_name)
             # Summary
             summary = issue.fields.summary
+
+            # 지역 : 'platform/region'
             try:
                 model_info \
                     = summary.split(model_name)[0].split('[Estreamer검증]')[1]
@@ -766,11 +789,15 @@ class Main(QtWidgets.QMainWindow, main_ui):
             except:
                 row_data.append(summary)
 
+            #Panel Type
+            row_data.append(panel_type)
+
             # 모델JIRA
             row_data.append(issue.key)
 
             # Spec.확인 JIRA : 같은 Model Name이 Summary에 포함된
             # JIRA issue는 유일하다고 가정한다. (2개 이상 존재하여선 안됨)
+            spec_jira = None
             for spec_issue in all_jira_spec:
                 summary = spec_issue.fields.summary
                 ## if found model in spec jira issues
@@ -778,10 +805,10 @@ class Main(QtWidgets.QMainWindow, main_ui):
                     # 일단 Spec.확인 JIRA index에  issue객체를 넣어둔다
                     # string 아니므로 주의가 필요하다.
                     row_data.append(spec_issue)
+                    spec_jira = spec_issue
                     break;
             else:
                 row_data.append(None)
-
 
             # 실물확인 JIRA
             for test_issue in all_jira_test:
@@ -814,10 +841,19 @@ class Main(QtWidgets.QMainWindow, main_ui):
                     # Image capture ver.은 'capture'로 시작하는 조건을 사용한다
                     if label.lower().find('capture')>=0:
                         row_data[self.idxImageVer_TBL_JIRA]=label
+                    # spec. Name은 대문자 영문자로 시작하는 조건을 사용한다.
+                    # -> 실물 확인 issue에서 spec. 이슈로 parsing부 이동
+                    #elif len(label)>0 and label[0].isalpha() and label[0].isupper():
+                    #    row_data[self.idxSpecName_TBL_JIRA] =label
 
+            if spec_jira is not None:
+                for label in spec_jira.fields.labels:
+                    if label is None:
+                        break;
                     # spec. Name은 Lowend 모델명으로 L로 시작하는 조건을 사용한다
-                    elif len(label)>0 and label.upper().startswith('L'):
-                        row_data[self.idxSpecName_TBL_JIRA] =label
+                    elif len(label)>0 and \
+                       label[0].isalpha() and label[0].isupper():
+                        row_data[self.idxSpecName_TBL_JIRA] = label
 
             self.jira_table_data[issue_parsed['model_name']] = row_data
             ordered_jira_data.append(row_data)
@@ -1049,18 +1085,19 @@ class Main(QtWidgets.QMainWindow, main_ui):
                 continue;
 
             ## 3-1. check & create sub-task1 : spec.확인요청 JIRA
+            # get panel type
+            panel_type = model_data[self.settings.col_panel_type]
             if model_data_jira[self.idxSpecConfimJIRA_TBL_JIRA] is None:
                 spec_fields = jira_handler.getFieldsForSpecCheckIssue(model_data
                                                                       , model_issue)
+                spec_fields['labels'].append(panel_type)
                 jira.create_issue(fields=spec_fields)
-            ## 4.의 model issue update 진행 필요
 
             ## 3-2. check & create sub-task2 : 실물확인 JIRA
             if model_data_jira[self.idxTestJIRA_TBL_JIRA] is None:
                 test_fields = jira_handler.getFieldsForTestIssue(model_data
                                                                  , model_issue)
                 jira.create_issue(fields=test_fields)
-            ## 4.의 model issue update 진행 필요
 
             # 4. Update fields of model issue
             model_fields = jira_handler.getFieldsForModelIssue(ver, model_data)

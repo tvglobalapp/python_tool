@@ -56,7 +56,7 @@ class Settings(QtWidgets.QDialog, settings_ui):
         self.col_hw_pl = 0
         self.col_grade = 0
         self.col_mainsoc = 0
-        self.col_chassis = 0
+        self.col_panel_type = 0
         self.col_dv_start = 0
         self.col_dv_end = 0
 
@@ -204,7 +204,7 @@ class Settings(QtWidgets.QDialog, settings_ui):
         self.txtColHwPL.setText(str(self.col_hw_pl))
         self.txtColGrade.setText(str(self.col_grade))
         self.txtColMainSoC.setText(str(self.col_mainsoc))
-        self.txtColChassis.setText(str(self.col_chassis))
+        self.txtColPanelType.setText(str(self.col_panel_type))
         self.txtColDvStart.setText(str(self.col_dv_start))
         self.txtColDvEnd.setText(str(self.col_dv_end))
 
@@ -280,7 +280,7 @@ class Settings(QtWidgets.QDialog, settings_ui):
         self.col_hw_pl          = int(dev_master.findtext('col_hw_pl'))
         self.col_grade          = int(dev_master.findtext('col_grade'))
         self.col_mainsoc        = int(dev_master.findtext('col_mainsoc'))
-        self.col_chassis        = int(dev_master.findtext('col_chassis'))
+        self.col_panel_type     = int(dev_master.findtext('col_panel_type'))
         self.col_dv_start       = int(dev_master.findtext('col_dv_start'))
         self.col_dv_end         = int(dev_master.findtext('col_dv_end'))
 
@@ -418,8 +418,8 @@ class Settings(QtWidgets.QDialog, settings_ui):
                 = self.txtColGrade.text().strip()
         SubElement(dev_master_setting, 'col_mainsoc').text \
                 = self.txtColMainSoC.text().strip()
-        SubElement(dev_master_setting, 'col_chassis').text \
-                = self.txtColChassis.text().strip()
+        SubElement(dev_master_setting, 'col_panel_type').text \
+                = self.txtColPanelType.text().strip()
         SubElement(dev_master_setting, 'col_dv_start').text \
                 = self.txtColDvStart.text().strip()
         SubElement(dev_master_setting, 'col_dv_end').text \
