@@ -5,6 +5,7 @@
   <label>18Y</label>
   <label>&#49892;&#47932;&#44160;&#51613;</label>
   <watcher>ybin.cho</watcher>
+  <watcher>gayoung.lee</watcher>
   <jql_model_issue>project=ESTREAMER and labels=18Y and labels=&#49892;&#47932;&#44160;&#51613; and labels=model</jql_model_issue>
   <jql_spec_issue>project=ESTREAMER and labels=18Y and labels=&#49892;&#47932;&#44160;&#51613; and labels=spec</jql_spec_issue>
   <jql_test_issue>project=ESTREAMER and labels=18Y and labels=&#49892;&#47932;&#44160;&#51613; and labels=test</jql_test_issue>

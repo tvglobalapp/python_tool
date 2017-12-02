@@ -171,7 +171,6 @@ class JIRA_Handler:
             return
         else:
             ## login success
-            print("jira login success")
             self.url = url
             if need_update_to_ui is True:
                 main_ui.jira_tracker = self.jira

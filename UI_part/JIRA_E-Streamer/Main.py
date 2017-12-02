@@ -677,7 +677,7 @@ class Main(QtWidgets.QMainWindow, main_ui):
         return diff_text
 
     def checkDiffAndFillMasterTbl(self):
-        print('checkDiffAndFillMAsterTbl starts')
+        print('check diff and fill master table starts')
         # let alias tables and jira data
         tbl_master = self.tblMaster
         tbl_jira   = self.tblJira

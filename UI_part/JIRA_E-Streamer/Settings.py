@@ -169,15 +169,12 @@ class Settings(QtWidgets.QDialog, settings_ui):
         return result
 
     def updateToUi(self):
-        print("set texts in show() ")
         # JIRA 설정
         self.txtProject.setText(self.project_id)
         self.txtJiraMaxResultCnt.setText(self.max_result_cnt)
         labels = self.getMergedClauses(self.labels)
         self.txtJiraLabels.setText(labels)
-        print(" [updateToUi] watchers : "+str(self.watchers))
         watchers = self.getMergedClauses(self.watchers)
-        print(" [updateToUi] watchers : "+watchers)
         self.txtWatchers.setText(watchers)
         self.txtJqlModel.setText(self.jql_model)
         self.txtJqlSpec.setText(self.jql_spec)
