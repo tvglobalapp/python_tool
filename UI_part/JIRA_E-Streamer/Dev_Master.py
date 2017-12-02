@@ -167,8 +167,16 @@ class Dev_Master:
         if is_valid:
             if rowdata[self.settings.col_model_name]=='':
                 is_valid = False
-        if is_valid and grade.endswith('D_VA')==False:
+        if is_valid:
+            is_match_grade = False
+            for grade_settings in self.settings.grades:
+                if grade.endswith(grade_settings):
+                    is_match_grade=True
+                    break
+            if is_match_grade is False:
                 is_valid = False
+        # if is_valid and grade.endswith('D_VA')==False:
+        #         is_valid = False
         return is_valid
 
     def isValidDateString(cls, date):
