@@ -260,8 +260,7 @@ class Main(QtWidgets.QMainWindow, main_ui):
         issue.add_field_value('labels', 'capture_'+imgVer)
         self.slotInquiryIssues()
 
-        status ="["+issueNoTxt+"] " \
-                +str(uploaded)+' files uploaded : capture_'+imgVer
+        status = str(uploaded)+' files uploaded to '+issueNoTxt
         self.lblStatus.setText(status)
         # imgFolder = str(QFileDialog.getExistingDirectory(self, "Select Directory"))
 
@@ -626,7 +625,11 @@ class Main(QtWidgets.QMainWindow, main_ui):
 
 
         idxPanelType = self.idxPanelType_TBL_MASTER
-        panel_type = tbl_master.item(row, idxPanelType).text()
+        if tbl_master.item(row, idxPanelType) is None:
+            panel_type = ''
+        else:
+            panel_type = tbl_master.item(row, idxPanelType).text()
+
         if panel_type!=model_jira[self.idxPanelType_TBL_JIRA]:
             diff_fields['panel_type'] = panel_type
             diff_text += ('Panel구분 변경 : '

@@ -274,7 +274,7 @@ class JIRA_Handler:
         new_issue['description']= '''
         모델 : {color:red}'''+model_name+'{color}\n'
 
-        new_issue['description']+= self.settings.spec_desc
+        new_issue['description']+= self.settings.test_desc
 
         new_issue['issuetype'] = {'name' : 'Sub-task'}
         new_issue['parent'] = {'id' : parent_issue.key}
